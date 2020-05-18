@@ -258,7 +258,7 @@ global {
 	    save inf_nh_list type: "csv" to: dir + "nh_inf_" + model_number + ".csv";
 	    save inf_gq_list type: "csv" to: dir + "gq_inf_" + model_number + ".csv";
 	    	
-	    save n_hosp_list type: "csv" to: dir + "hospday" + model_number  + ".csv";
+	    save n_hosp_list type: "csv" to: dir + "hosp" + model_number  + ".csv";
 	    save hosp_age_list type: "csv" to: dir + "hospage" + model_number + ".csv";
 	    	    
 	    do die;						
