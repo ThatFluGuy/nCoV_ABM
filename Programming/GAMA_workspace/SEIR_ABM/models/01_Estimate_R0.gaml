@@ -29,57 +29,52 @@ global {
 	
 	string dir <- "H:/Scratch/GAMAout/MPE0KG/"; // Output directory
 	
-	float beta_HH <- 0.03;				// Probability of infection given contact in household
-	float beta_COM <- 0.01;				// Probability of infection given contact in workplace/community
+	float beta_HH <- 0.0075;			// Probability of infection given contact in household
+	float beta_COM <- 0.0025;			// Probability of infection given contact in workplace/community
+	
+	// Override initialization defaults
+	bool initialize_Settings <- false;
+	bool initialize_Infectious <- false;
+	bool initialize_csv <- false;
+	int nb_inf_init <- 1;
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {
-		if initialize_Settings = true {
-			// Create settings (locations where agents can be)
-			create Home number: nb_home_init;
-			create School number: nb_school_init;
-			create Workplace number: nb_work_init;
-			create Community number: nb_comm_init;
-			create NH number: nb_nh_init;
-			create GQ number: nb_gq_init;
-		}
+		// Create settings (locations where agents can be)
+		create Home number: nb_home_init;
+		create School number: nb_school_init;
+		create Workplace number: nb_work_init;
+		create Community number: nb_comm_init;
+		create NH number: nb_nh_init;
+		create GQ number: nb_gq_init;
 		
-		// Just for R0 calculation randomly sample host type based on prevalence and set to infectious
-		int host_type <- [1, 2, 3, 4, 5, 6][rnd_choice([0.044, 0.133, 0.752, 0.051, 0.004, 0.016])];
-		if host_type = 1 {
-			create Toddler number: 1 with:[sus::false, inf::true, counter_inf::dur_infect[rnd_choice([0.25, 0.5, 0.25])]];
-		} else if host_type = 2 {
-			create Child number: 1 with:[sus::false, inf::true, counter_inf::dur_infect[rnd_choice([0.25, 0.5, 0.25])]];
-		} else if host_type = 3 {
-			create Adult number: 1 with:[sus::false, inf::true, counter_inf::dur_infect[rnd_choice([0.25, 0.5, 0.25])]];
-		} else if host_type = 4 {
-			create Senior number: 1 with:[sus::false, inf::true, counter_inf::dur_infect[rnd_choice([0.25, 0.5, 0.25])]];
-		} else if host_type = 5 {
-			create NHresident number: 1 with:[sus::false, inf::true, counter_inf::dur_infect[rnd_choice([0.25, 0.5, 0.25])]];
-		} else if host_type = 6 {
-			create GQresident number: 1 with:[sus::false, inf::true, counter_inf::dur_infect[rnd_choice([0.25, 0.5, 0.25])]];
-		}
-		
-		if initialize_csv = true {
-			create Toddler from: csv_file("../includes/sim_Toddler_50k_" + model_number + ".csv", true) 
-						with: [sus::true, indexHome::int(get("indexHome")), 
+		create Toddler from: csv_file("../includes/sim_Toddler_50k_" + model_number + ".csv", true) 
+					with: [sus::true, indexHome::int(get("indexHome")), 
+						ageyrs::int(get("ageyrs")), male::bool(get("male"))];
+		create Child from: csv_file("../includes/sim_Child_50k_" + model_number + ".csv", true) 
+					with: [sus::true, indexHome::int(get("indexHome")), ageyrs::int(get("ageyrs")),  
+							male::bool(get("male")), indexSchool::int(get("indexSchool"))];
+		create Adult from: csv_file("../includes/sim_Adult_50k_" + model_number + ".csv", true)
+					with: [sus::true, indexHome::int(get("indexHome")), ageyrs::int(get("ageyrs")),
+							male::bool(get("male")), indexWorkplace::int(get("indexBus")),
+							indexSchool::int(get("indexSchool")), indexNH::int(get("indexNH")),
+							indexGQ::int(get("indexGQ"))];
+		create Senior from: csv_file("../includes/sim_Senior_50k_" + model_number + ".csv", true) 
+					with: [sus::true, indexHome::int(get("indexHome")), 
 							ageyrs::int(get("ageyrs")), male::bool(get("male"))];
-			create Child from: csv_file("../includes/sim_Child_50k_" + model_number + ".csv", true) 
-						with: [sus::true, indexHome::int(get("indexHome")), ageyrs::int(get("ageyrs")),  
-								male::bool(get("male")), indexSchool::int(get("indexSchool"))];
-			create Adult from: csv_file("../includes/sim_Adult_50k_" + model_number + ".csv", true)
-						with: [sus::true, indexHome::int(get("indexHome")), ageyrs::int(get("ageyrs")),
-								male::bool(get("male")), indexWorkplace::int(get("indexBus")),
-								indexSchool::int(get("indexSchool")), indexNH::int(get("indexNH")),
-								indexGQ::int(get("indexGQ"))];
-			create Senior from: csv_file("../includes/sim_Senior_50k_" + model_number + ".csv", true) 
-						with: [sus::true, indexHome::int(get("indexHome")), 
-								ageyrs::int(get("ageyrs")), male::bool(get("male"))];
-			create NHresident from: csv_file("../includes/sim_NH_50k_" + model_number + ".csv", true)
-						with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexNH::int(get("indexNH"))];
-			create GQresident from: csv_file("../includes/sim_GQ_50k_" + model_number + ".csv", true)
-						with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexGQ::int(get("indexGQ"))];
-		}	
+		create NHresident from: csv_file("../includes/sim_NH_50k_" + model_number + ".csv", true)
+					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexNH::int(get("indexNH"))];
+		create GQresident from: csv_file("../includes/sim_GQ_50k_" + model_number + ".csv", true)
+					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexGQ::int(get("indexGQ"))];
+			
+		// Create infectious host(s)
+		loop times: nb_inf_init {
+			ask one_of(agents of_generic_species(Host_Master)){
+				self.sus <- false;
+				self.inf <- true;
+				self.counter_inf <- dur_infect[rnd_choice([0.25, 0.5, 0.25])];
+			}
+		}		
 	}
 	
 	action update_counts {
@@ -153,19 +148,18 @@ species GQresident parent: GQresident_Master {
 
 /* Run the simulation in batch mode */
 experiment SEIR_R0 type: batch repeat: 1 until: (day >= max_days) parallel: true {
-	parameter "Initialize 2" var: initialize_Infectious init: false; // Don't start with nb_inf_init by default
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 		
 	init{
-		create simulation with: [seed::seedValue + 1, model_number::1, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 2, model_number::2, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 3, model_number::3, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 4, model_number::4, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 5, model_number::5, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 6, model_number::6, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 7, model_number::7, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 8, model_number::8, initialize_Infectious::false, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 9, model_number::9, initialize_Infectious::false, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 1, model_number::1];
+		create simulation with: [seed::seedValue + 2, model_number::2];
+		create simulation with: [seed::seedValue + 3, model_number::3];
+		create simulation with: [seed::seedValue + 4, model_number::4];
+		create simulation with: [seed::seedValue + 5, model_number::5];
+		create simulation with: [seed::seedValue + 6, model_number::6];
+		create simulation with: [seed::seedValue + 7, model_number::7];
+		create simulation with: [seed::seedValue + 8, model_number::8];
+		create simulation with: [seed::seedValue + 9, model_number::9];
 	}
 }

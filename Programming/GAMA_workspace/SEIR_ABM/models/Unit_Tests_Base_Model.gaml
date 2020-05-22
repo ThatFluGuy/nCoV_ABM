@@ -90,6 +90,30 @@ global {
 			create Toddler with:[sus::true, exp::false, inf::false];
 		}
 	}
+	
+	// Need to count number infected Toddler (not Toddler_Master) etc, so modify update_counts
+	action update_counts {
+		loop times: n_cross_inf {
+			ask one_of(agents of_generic_species (Host_Master)){
+				if self.sus = true {
+					self.sus <- false;
+					self.exp <- true;
+					
+					counter_exp <- dur_expose[rnd_choice([0.2, 0.5, 0.3])];
+					counter_sym <- counter_exp + dur_incub[rnd_choice([0.2, 0.6, 0.2])];
+				}
+			}
+		}
+		n_cross_inf <- 0;
+
+		// Update population count tracking variables
+		inf_tod_list[day] <- Toddler count (each.inf);
+		inf_chi_list[day] <- Child count (each.inf);
+		inf_adu_list[day] <- Adult count (each.inf);
+		inf_sen_list[day] <- Senior count (each.inf);
+		inf_nh_list[day] <- NHresident count (each.inf);
+		inf_gq_list[day] <- GQresident count (each.inf);
+	}
 }
 
 /* Create "child" incidences of the master versions that allow output of infectious contacts */
@@ -176,7 +200,7 @@ experiment TEST_SEIR_flow type: gui {
 	parameter "Initial exposed" var: exp_init init: true;
 	parameter "Initialize 1" var: initialize_Settings init: false;
 	parameter "Initialize 2" var: initialize_Infectious init: false;
-	parameter "Use external csv" var: use_csv init: false;
+	parameter "Use external csv" var: initialize_csv init: false;
 	
 	reflex simout {
 		Host_Master lone_host;
@@ -205,7 +229,7 @@ experiment TEST_movement type: gui {
 	// morning (home/school/work), afternoon (home/community), evening (home). Set community probabilities to 100%
 	parameter "Max days" var: max_days init: 7;
 	parameter "Agent type" var: agent_type_init init: 1;
-	parameter "Use external csv" var: use_csv init: false;
+	parameter "Use external csv" var: initialize_csv init: false;
 	parameter "Initialize 1" var: initialize_Settings init: false;
 	parameter "Initialize 2" var: initialize_Infectious init: false;
 	parameter "Community weekday" var: prob_community_wkdy init: 1.0;
@@ -246,7 +270,7 @@ experiment TEST_contacts type: gui {
 	// Evening, 4 for all (at home) except NHresident (should be 1)
 	parameter "Max days" var: max_days init: 7;
 	parameter "Agent type" var: agent_type_init init: 7;
-	parameter "Use external csv" var: use_csv init: false;
+	parameter "Use external csv" var: initialize_csv init: false;
 	parameter "Initialize 1" var: initialize_Settings init: false;
 	parameter "Initialize 2" var: initialize_Infectious init: false;
 	parameter "Community weekday" var: prob_community_wkdy init: 1.0;
@@ -269,7 +293,7 @@ experiment TEST_infections type: gui {
 	// the susceptible toddler should be infected in almost all simulation runs
 	parameter "Max days" var: max_days init: 8;
 	parameter "Agent type" var: agent_type_init init: 8;
-	parameter "Use external csv" var: use_csv init: false;
+	parameter "Use external csv" var: initialize_csv init: false;
 	parameter "Initialize 1" var: initialize_Settings init: false;
 	parameter "Initialize 2" var: initialize_Infectious init: false;
 	parameter "Nursing home visit" var: prob_nhgq_visit init: 0.0;
@@ -284,7 +308,7 @@ experiment TEST_crossInfect type: gui {
 	// With crossprob = 1.0, infection should spread from one simulation (geographic patch) to another rapidly
 	parameter "Max days" var: max_days init: 10;
 	parameter "Agent type" var: agent_type_init init: 3;
-	parameter "Use external csv" var: use_csv init: false;
+	parameter "Use external csv" var: initialize_csv init: false;
 	parameter "Initialize 1" var: initialize_Settings init: false;
 	parameter "Initialize 2" var: initialize_Infectious init: false;
 	parameter "Cross-sim prob" var: cross_prob init: 1.0;
@@ -294,7 +318,7 @@ experiment TEST_crossInfect type: gui {
 	parameter "Initial infect" var: inf_init init: true;
 	
 	init{
-		create simulation with: [model_number::1, max_days::10, agent_type_init::3, use_csv::false, 
+		create simulation with: [model_number::1, max_days::10, agent_type_init::3, initialize_csv::false, 
 			initialize_Settings::false, initialize_Infectious::false, cross_prob::1.0, all_sims::[0,1],
 			sim_sample_prob::[0.5, 0.5], sus_init::true, inf_init::false];	
 	} 	
@@ -304,6 +328,3 @@ experiment TEST_crossInfect type: gui {
 	}
 	
 }
-
-// Additional unit tests to program:
-// Summary variables correctly capturing output

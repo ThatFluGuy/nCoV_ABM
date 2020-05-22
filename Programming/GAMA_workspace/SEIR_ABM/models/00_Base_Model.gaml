@@ -118,11 +118,6 @@ global {
 			create NH number: nb_nh_init;
 			create GQ number: nb_gq_init;
 		}
-
-		if initialize_Infectious = true {
-			// Create infectious host(s)
-			create Adult_Master number: nb_inf_init with: [sus::false, inf::true]; 
-		}
 				
 		if initialize_csv = true {
 			create Toddler_Master from: csv_file("../includes/sim_Toddler_50k_" + model_number + ".csv", true) 
@@ -143,6 +138,17 @@ global {
 						with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexNH::int(get("indexNH"))];
 			create GQresident_Master from: csv_file("../includes/sim_GQ_50k_" + model_number + ".csv", true)
 						with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexGQ::int(get("indexGQ"))];
+		}
+		
+		if initialize_Infectious = true {
+			// Create infectious host(s)
+			loop times: nb_inf_init {
+				ask one_of(agents of_generic_species(Host_Master)){
+					self.sus <- false;
+					self.inf <- true;
+					self.counter_inf <- dur_infect[rnd_choice([0.25, 0.5, 0.25])];
+				}
+			} 
 		}				
 	}
 

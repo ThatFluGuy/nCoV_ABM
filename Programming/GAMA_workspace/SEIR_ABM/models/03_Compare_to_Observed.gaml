@@ -87,7 +87,7 @@ global {
 	// Modify the update_counts action to track Toddler not Toddler_Master etc
 	action update_counts {
 		loop times: n_cross_inf {
-			ask one_of(agents of_generic_species Host_Master){
+			ask one_of(agents of_generic_species(Host_Master)){
 				if self.sus = true {
 					self.sus <- false;
 					self.exp <- true;
