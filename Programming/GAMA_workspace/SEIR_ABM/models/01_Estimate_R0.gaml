@@ -29,8 +29,8 @@ global {
 	
 	string dir <- "H:/Scratch/GAMAout/MPE0KG/"; // Output directory
 	
-	float beta_HH <- 0.0075;			// Probability of infection given contact in household
-	float beta_COM <- 0.0025;			// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.016;			// Probability of infection given contact in household
+	float beta_COM <- 0.008;			// Probability of infection given contact in workplace/community
 	
 	// Override initialization defaults
 	bool initialize_Settings <- false;

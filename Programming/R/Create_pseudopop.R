@@ -814,6 +814,8 @@ for (n in 1:10){
 # of daycare/childcare/pre-school. Daycares are set to size 20 children and   #
 # two adults.                                                                 #
 # Currently ignoring home education.                                          #
+# Update 2020.05.25: Ro is too high. Assume that children only make contact   #
+# with up to 100 other students and 10 teachers at school.                    #
 
 f.school <- function(pop.sch){
   # For pop.sch, a data.frame of the source population dataset, 
@@ -857,11 +859,9 @@ f.school <- function(pop.sch){
       pop.sch$indexSchool[i] <- index.e
       in.e <- in.e + 1
       
-      if (in.e >= 400){
-        if (in.e==800 | runif(1, 0, 1)<=0.005){
-          in.e <- 0
-          index.e <- max(index.e, index.m, index.h, index.d) + 1
-        }
+      if (in.e >= 100){
+        in.e <- 0
+        index.e <- max(index.e, index.m, index.h, index.d) + 1
       }
       
     } else if (pop.sch$ageyrs[i] %in% 11:13) {
@@ -869,11 +869,9 @@ f.school <- function(pop.sch){
       pop.sch$indexSchool[i] <- index.m
       in.m <- in.m + 1
       
-      if (in.m >= 400){
-        if (in.m==800 | runif(1, 0, 1)<=0.005){
-          in.m <- 0
-          index.m <- max(index.e, index.m, index.h, index.d) + 1
-        }
+      if (in.m >= 100){
+        in.m <- 0
+        index.m <- max(index.e, index.m, index.h, index.d) + 1
       }
       
     } else if (pop.sch$ageyrs[i] %in% 14:17) {
@@ -881,11 +879,9 @@ f.school <- function(pop.sch){
       pop.sch$indexSchool[i] <- index.h
       in.h <- in.h + 1
       
-      if (in.h >= 400){
-        if (in.h==800 | runif(1, 0, 1)<=0.005){
-          in.h <- 0
-          index.h <- max(index.e, index.m, index.h, index.d) + 1
-        }
+      if (in.h >= 100){
+        in.h <- 0
+        index.h <- max(index.e, index.m, index.h, index.d) + 1
       }
       
     }
@@ -941,6 +937,8 @@ for (s in 1:10){
 # them to nursing homes or group quarters. For NH, use CMMS guidance of 3hr   #
 # staff time per resident to estimate number of staff as (residents/3).       #
 # Assume the same for group quarters.                                         #
+# Update 2020.05.25: Ro is too high; assume that workers at large busisnesses #
+# only make effective contact with up to 100 people.                          #
 
 employed.df <- read.csv(paste0(path, "export_workforce.csv"), stringsAsFactors = FALSE)
 
@@ -957,7 +955,8 @@ f.business <- function(pop.bus){
   pop.bus$indexBus <- rep(NA, times=dim(pop.bus)[1])
   
   bus.index <- 0
-  bus.size <- ifelse(runif(1) <0.05, 500, round(10+20*rgamma(1, 0.5, 0.5)))
+  #bus.size <- ifelse(runif(1) <0.05, 500, round(10+20*rgamma(1, 0.5, 0.5)))
+  bus.size <- min(round(10+20*rgamma(1, 0.5, 0.5)), 100)
   in.b <- 0
   
   for (i in 1:dim(pop.bus)[1]){
@@ -969,7 +968,8 @@ f.business <- function(pop.bus){
         if (in.b == bus.size){
           in.b <- 0
           bus.index <- bus.index + 1
-          bus.size <- ifelse(runif(1) <0.05, 500, round(10+20*rgamma(1, 0.5, 0.5)))
+          #bus.size <- ifelse(runif(1) <0.05, 500, round(10+20*rgamma(1, 0.5, 0.5)))
+          bus.size <- min(round(10+20*rgamma(1, 0.5, 0.5)), 100)
         }
       }
     }
@@ -1054,15 +1054,15 @@ f_agesplit <- function(inset, size, part_of_list=FALSE, list.n=0){
   senior <- inset %>% filter(ageyrs >= 75) %>% select(indexHome, ageyrs, male)
   
   if (part_of_list==FALSE){
-    write.csv(toddler, paste0(path, "sim_Toddler_", size, ".csv"), row.names = FALSE)
+    #write.csv(toddler, paste0(path, "sim_Toddler_", size, ".csv"), row.names = FALSE)
     write.csv(child, paste0(path, "sim_Child_", size, ".csv"), row.names = FALSE)
     write.csv(adult, paste0(path, "sim_Adult_", size, ".csv"), row.names = FALSE)
-    write.csv(senior, paste0(path, "sim_Senior_", size, ".csv"), row.names = FALSE)
+    #write.csv(senior, paste0(path, "sim_Senior_", size, ".csv"), row.names = FALSE)
   } else {
-    write.csv(toddler, paste0(path, "sim_Toddler_", size, "_", list.n, ".csv"), row.names = FALSE)
+    #write.csv(toddler, paste0(path, "sim_Toddler_", size, "_", list.n, ".csv"), row.names = FALSE)
     write.csv(child, paste0(path, "sim_Child_", size, "_", list.n, ".csv"), row.names = FALSE)
     write.csv(adult, paste0(path, "sim_Adult_", size, "_", list.n, ".csv"), row.names = FALSE)
-    write.csv(senior, paste0(path, "sim_Senior_", size, "_", list.n, ".csv"), row.names = FALSE)
+    #write.csv(senior, paste0(path, "sim_Senior_", size, "_", list.n, ".csv"), row.names = FALSE)
   }
 }
 
@@ -1072,8 +1072,8 @@ f_agesplit <- function(inset, size, part_of_list=FALSE, list.n=0){
 
 for (s in 1:10){
   f_agesplit(inset=pop.50k[[s]], size="50k", part_of_list = TRUE, list.n = s-1)
-  write.csv(gq.50k[[s]], paste0(path, "sim_GQ_50k_", s-1, ".csv"), row.names=FALSE)
-  write.csv(nh.50k[[s]], paste0(path, "sim_NH_50k_", s-1, ".csv"), row.names=FALSE)
+  #write.csv(gq.50k[[s]], paste0(path, "sim_GQ_50k_", s-1, ".csv"), row.names=FALSE)
+  #write.csv(nh.50k[[s]], paste0(path, "sim_NH_50k_", s-1, ".csv"), row.names=FALSE)
 }
 
 write.csv(pop.full, paste0(path, "sim_HH_full.csv"), row.names=FALSE)
