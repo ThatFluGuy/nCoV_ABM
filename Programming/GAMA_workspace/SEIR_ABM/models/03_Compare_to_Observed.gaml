@@ -20,10 +20,10 @@ import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
 global {
-	int max_days <- 100;
+	int max_days <- 120;
 	
-	float beta_HH <- 0.03;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.01;				// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -34,22 +34,10 @@ global {
 	// Percent decline variables update in the UpdateDay reflex
 	float comm_open_pct <- 1.0;				// Percent community site visits occurring during specified time period
 	float work_open_pct <- 1.0;				// Percent of work occuring during specified time period
-	int school_close_day <- 22; 				// Close schools on day 15 of the simulation (March 12)
-	list<int> close_days <- [18, 25, 29, 41];	// Simulation days when interventions change	
+	int school_close_day <- 41; 				// Close schools on day 15 of the simulation (March 12)
+	list<int> close_days <- [34, 41, 45, 57];	// Simulation days when interventions change	
 	list<float> close_pcts <- [0.395, 0.625, 0.67, 0.9];	// Percent reductions in contacts at different intervention periods
 
-
-	list<float>hosp_prob <- [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 
-						 	 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
-						 	 0.001, 0.001, 0.002, 0.002, 0.003, 0.003, 0.004, 0.004, 0.005, 0.005,
-						 	 0.006, 0.006, 0.007, 0.007, 0.008, 0.008, 0.009, 0.009, 0.010, 0.010,
-						 	 0.011, 0.011, 0.012, 0.012, 0.013, 0.013, 0.014, 0.014, 0.015, 0.015,
-						 	 0.016, 0.016, 0.017, 0.017, 0.018, 0.018, 0.019, 0.019, 0.020, 0.025,
-						 	 0.030, 0.040, 0.050, 0.060, 0.070, 0.080, 0.090, 0.095, 0.100, 0.105,
-						 	 0.110, 0.120, 0.130, 0.140, 0.150, 0.160, 0.170, 0.180, 0.190, 0.200,
-						 	 0.210, 0.220, 0.230, 0.240, 0.250, 0.260, 0.270, 0.280, 0.290, 0.300,
-						 	 0.310, 0.320, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333];
-	
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		

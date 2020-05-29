@@ -61,20 +61,20 @@ global {
 	float prob_community_wkdy <- 0.4; 	// Probability of going to community location during weekday afternoon
 	float prob_community_wknd <- 0.46;  // Probability of going to community location during weekend afternoon
 	float prob_nhgq_visit <- 0.001;		// Probability of visiting a NH or GQ location during afternoon
-	float beta_HH  <- 0.016;			// Probability of infection given contact in household
-	float beta_COM <- 0.008;			// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.024;			// Probability of infection given contact in household
+	float beta_COM <- 0.012;			// Probability of infection given contact in workplace/community
 	
 	// Probability that infection will result in hospitalization, by age (in years)
 	list<float>hosp_prob <- [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 
 						 	 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
 						 	 0.001, 0.001, 0.002, 0.002, 0.003, 0.003, 0.004, 0.004, 0.005, 0.005,
 						 	 0.006, 0.006, 0.007, 0.007, 0.008, 0.008, 0.009, 0.009, 0.010, 0.010,
-						 	 0.011, 0.011, 0.012, 0.012, 0.013, 0.013, 0.014, 0.014, 0.015, 0.015,
-						 	 0.016, 0.016, 0.017, 0.017, 0.018, 0.018, 0.019, 0.019, 0.020, 0.025,
-						 	 0.030, 0.040, 0.050, 0.060, 0.070, 0.080, 0.090, 0.095, 0.100, 0.105,
-						 	 0.110, 0.120, 0.130, 0.140, 0.150, 0.160, 0.170, 0.180, 0.190, 0.200,
-						 	 0.210, 0.220, 0.230, 0.240, 0.250, 0.260, 0.270, 0.280, 0.290, 0.300,
-						 	 0.310, 0.320, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333];
+						 	 0.011, 0.012, 0.012, 0.013, 0.014, 0.014, 0.015, 0.016, 0.016, 0.017,
+						 	 0.018, 0.018, 0.019, 0.020, 0.020, 0.021, 0.022, 0.023, 0.024, 0.025,
+						 	 0.030, 0.037, 0.044, 0.051, 0.058, 0.065, 0.072, 0.079, 0.086, 0.093,
+						 	 0.100, 0.107, 0.114, 0.121, 0.128, 0.135, 0.142, 0.149, 0.156, 0.163,
+						 	 0.170, 0.177, 0.184, 0.191, 0.198, 0.205, 0.212, 0.219, 0.226, 0.233,
+						 	 0.240, 0.247, 0.254, 0.261, 0.268, 0.275, 0.282, 0.289, 0.296, 0.300];
 	
 	// Tracking variables: Daily number of susceptible/exposed/infectious persons by host category
 	list<int> sus_tod_list <- list_with(max_days+1, 0);
