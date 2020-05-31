@@ -29,8 +29,7 @@ model BaseModel
 global {
 	int max_days <- 150;				// Number of days to simulate
 	
-	// Output directory
-	string dir <- "H:/Scratch/GAMAout/MPE0KG/";
+	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
 	
 	// Initialization variables
 	float step <- 8 #h;					// Time step per model iteration (8 hours)
