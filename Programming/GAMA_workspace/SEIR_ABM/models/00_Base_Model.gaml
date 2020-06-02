@@ -308,7 +308,7 @@ species Host_Master use_individual_shapes: false schedules:[] {
 	}
 	
 	/* Increment counter for onset of symptoms */
-	reflex increment_sympt when: daypart="evening" and counter_sym > 0 {
+	reflex increment_sympt when: daypart="evening" and counter_sym >= 0 {
 		counter_sym <- counter_sym - 1;
 	}
 	
