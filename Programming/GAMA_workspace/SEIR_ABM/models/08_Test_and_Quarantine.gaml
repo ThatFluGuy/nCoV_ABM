@@ -18,8 +18,7 @@ import "../models/00_Base_Model.gaml"
 global {
 	int max_days <- 150;
 
-	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
-	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
+	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
 	
 	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
 	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
@@ -56,8 +55,6 @@ global {
 		}	
 		
 		// Create hosts
-		create Adult number: nb_inf_init with: [sus::false, inf::true]; // Starting number infectious
-		
 		create Toddler from: csv_file("../includes/sim_Toddler_50k_" + model_number + ".csv", true) 
 					with: [sus::true, indexHome::int(get("indexHome")), 
 						ageyrs::int(get("ageyrs")), male::bool(get("male"))];
@@ -126,27 +123,6 @@ global {
 		inf_sen_list[day] <- Senior count (each.inf);
 		inf_nh_list[day] <- NHresident count (each.inf);
 		inf_gq_list[day] <- GQresident count (each.inf);
-	}
-
-	// Modify the update_day action to calculate probabilities of going to work or community based on closures
-	action update_day {
-		// Update simulation day and weekday
-		day <- day + 1;
-		if weekday = "Su"{
-			weekday <- "Mo";
-		} else if weekday = "Mo" {
-			weekday <- "Tu";
-		} else if weekday = "Tu" {
-			weekday <- "We";
-		} else if weekday = "We" {
-			weekday <- "Th";
-		} else if weekday = "Th" {
-			weekday <- "Fr";
-		} else if weekday = "Fr" {
-			weekday <- "Sa";
-		} else if weekday = "Sa" {
-			weekday <- "Su";
-		}
 	}
 }
 
