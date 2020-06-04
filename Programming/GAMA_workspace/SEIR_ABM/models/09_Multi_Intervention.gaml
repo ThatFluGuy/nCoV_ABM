@@ -1,27 +1,25 @@
 /***
-* Name: TestandQuarantine
+* Name: MultiIntervention
 * Author: Michael L. Jackson
-* Description: Model for impact of testing and quarantining HHs of positives
+* Description: 
 ***/
 
-model TestandQuarantine
+model MultiIntervention
 
-/* This program estimates the course of the COVID-19 epidemic in the simulated population assuming */
-/* that widespread testing is used to identify COVID-19 infections and that households of infected */
-/* persons are quarantined until the end of their possible latent period. Use March 12th as the    */
-/* date the intervention starts. Note that this leaves nursing homes, group quarters, schools, and */
-/* workplace fully open.																		   */
-/* To quarantine households, this program uses the QuarantineFlag agent. These map 1:1 with HH's   */
-/* and track whether quarantine is in place. Hosts check whether their household is in quarantine  */
-/* (via QuarantineFlag) before moving.															   */
+/* Starting June 8th (simulation day 129), explore the possible effects of different interventions on */
+/* COVID-19 hospitalizations into the future. Interventions to test include promoting voluntary work- */
+/* from-home to the extent possible, cocooning seniors, and test-and quarantine. This program allows  */
+/* each of these different interventions, with settings in different Experiments used to implement    */
+/* the specific options. Starts with modeling the interventions as actually implemented through May.  */
 
 import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
 global {
-	int max_days <- 150;
+	int max_days <- 365;
 
-	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 	
 	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
 	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
@@ -29,13 +27,27 @@ global {
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
 	bool initialize_csv <- false;
-	bool initialize_unit_test <- false;		// Use only if testing quarantine effectiveness;
 	
 	// Social distancing variables
 	// Set dates of interventions and initialize percent decline variables
 	// Percent decline variables update in the UpdateDay reflex
-	int trace_start_day <- 41; 				// Start contact tracing on day 41 of the simulation (March 12)
-	float detect_prob <- 0.5;				// Probability that symptomatic person is detected by testing
+	float comm_open_pct <- 1.0;						// Percent community site visits occurring during specified time period
+	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
+
+	list<int>   change_days <- [34, 41, 45, 57, 129];				// Simulation days when work interventions change	
+	list<float> work_close_pcts <- [0.395, 0.625, 0.67, 0.9, 0.395];	// Percent reductions in work contacts at different periods
+	list<float> comm_close_pcts <- [0.395, 0.625, 0.67, 0.9, 0.0];		// Percent reductions in community contacts at different periods
+	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0, 0.99];		// Percent reductions in NH/GQ visits 
+
+	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
+	int school_open_day <- 366;						// Simulation day when schools open
+	bool school_open <- true;						// Flag for whether school is open
+
+	// Test-and-quarantine variables
+	bool use_test_trace <- false;
+	int trace_start_day <- 129;
+	float detect_prob <- 0.5;
+	float quarantine_prob <- 0.7;
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		
@@ -48,17 +60,9 @@ global {
 		create NH number: nb_nh_init;
 		create GQ number: nb_gq_init;
 		
-		if initialize_unit_test = true {
-			// For unit testing only
-			// Create one Host of each community type in the first household to track
-			// Do this first so that these have index 0
-			create Toddler with: [sus::false, exp::true, inf::false, counter_exp::2, indexHome::0];
-			create Child with: [sus::true, exp::false, inf::false, indexHome::0];
-			create Adult with: [sus::true, exp::false, inf::false, indexHome::0];
-			create Senior with: [sus::true, exp::false, inf::false, indexHome::0];
-		}	
-		
 		// Create hosts
+		create Adult number: nb_inf_init with: [sus::false, inf::true]; // Starting number infectious
+		
 		create Toddler from: csv_file("../includes/sim_Toddler_50k_" + model_number + ".csv", true) 
 					with: [sus::true, indexHome::int(get("indexHome")), 
 						ageyrs::int(get("ageyrs")), male::bool(get("male"))];
@@ -76,19 +80,7 @@ global {
 		create NHresident from: csv_file("../includes/sim_NH_50k_" + model_number + ".csv", true)
 					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexNH::int(get("indexNH"))];
 		create GQresident from: csv_file("../includes/sim_GQ_50k_" + model_number + ".csv", true)
-					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexGQ::int(get("indexGQ"))];
-		
-		if initialize_unit_test = false {
-			// Create infectious host(s) under normal simulation runs
-			loop times: nb_inf_init {
-				ask one_of(agents of_generic_species(Host_Master)){
-					self.sus <- false;
-					self.inf <- true;
-					self.counter_inf <- dur_infect[rnd_choice([0.25, 0.5, 0.25])];
-				}
-			} 
-		} 
-
+					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexGQ::int(get("indexGQ"))];					
 	}
 
 	// Modify the update_counts action to track Toddler not Toddler_Master etc
@@ -128,6 +120,62 @@ global {
 		inf_nh_list[day] <- NHresident count (each.inf);
 		inf_gq_list[day] <- GQresident count (each.inf);
 	}
+
+	// Modify the update_day action to calculate probabilities of going to work or community based on closures
+	action update_day {
+		// Update simulation day and weekday
+		day <- day + 1;
+		if weekday = "Su"{
+			weekday <- "Mo";
+		} else if weekday = "Mo" {
+			weekday <- "Tu";
+		} else if weekday = "Tu" {
+			weekday <- "We";
+		} else if weekday = "We" {
+			weekday <- "Th";
+		} else if weekday = "Th" {
+			weekday <- "Fr";
+		} else if weekday = "Fr" {
+			weekday <- "Sa";
+		} else if weekday = "Sa" {
+			weekday <- "Su";
+		}
+		
+		// Update work, community, and NH/GQ visit probabilities
+		if day < change_days[0] {
+			comm_open_pct <- 1.0;
+			work_open_pct <- 1.0;
+		} else if day < change_days[1] {
+			comm_open_pct <- 1-comm_close_pcts[0];
+			work_open_pct <- 1-work_close_pcts[0];
+			prob_nhgq_visit <- 1-nhgq_close_pcts[0];
+		} else if day < change_days[2] {
+			comm_open_pct <- 1-comm_close_pcts[1];
+			work_open_pct <- 1-work_close_pcts[1];
+			prob_nhgq_visit <- 1-nhgq_close_pcts[1];
+		} else if day < change_days[3] {
+			comm_open_pct <- 1-comm_close_pcts[2];
+			work_open_pct <- 1-work_close_pcts[2];
+			prob_nhgq_visit <- 1-nhgq_close_pcts[2];
+		} else if day < change_days[4]{
+			comm_open_pct <- 1-comm_close_pcts[3];
+			work_open_pct <- 1-work_close_pcts[3];
+			prob_nhgq_visit <- 1-nhgq_close_pcts[3];
+		} else {
+			comm_open_pct <- 1-comm_close_pcts[4];
+			work_open_pct <- 1-work_close_pcts[4];
+			prob_nhgq_visit <- 1-nhgq_close_pcts[4];
+		}
+		
+		// Flag for whether school is in session
+		if day < school_close_day {
+			school_open <- true;
+		} else if day < school_open_day {
+			school_open <- false;
+		} else {
+			school_open <- true;
+		}
+	}
 }
 
 /* TODDLER, a subset of Host ages 0-5 who is not assigned to a "school" (e.g. daycare, pre-school) */
@@ -159,6 +207,27 @@ species Toddler parent: Toddler_Master {
 			self.under_quarantine <- true;
 			self.quarantine_counter <- 14;
 		} 
+	}
+	
+	action move_afternoon {
+		// Afternoon: some proportion go to random GQ or NH, some go to random community location, others go home;
+		// Check for NH visit. If not, check for GQ visit (same prob). If not, check for community
+		// Varies based on weekday vs. weekend
+		if outside_sim = true {
+			// If infecting someone in another sub-population, set location outside the grid
+			self.location <- point(-1, -1, 0);
+			outside_sim <- false;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(NH).location;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(GQ).location;
+		} else if flip(prob_community_wkdy * comm_open_pct) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
+			self.location <- one_of(Community).location;
+		} else if flip(prob_community_wknd * comm_open_pct) and weekday in ["Sa", "Su"]{
+			self.location <- one_of(Community).location;
+		} else {
+			self.location <- (Home at indexHome).location;
+		}
 	}
 	
 	// Add quarantine modification to actions and movement
@@ -200,7 +269,7 @@ species Toddler parent: Toddler_Master {
 species Child parent: Child_Master {
 	bool detected <- false;
 	int detect_counter <- -1;
-	
+
 	// Count-down to infection being detected
 	// Quarantine self on detection
 	reflex increment_detection when: detect_counter >= 0 and daypart = "evening" {
@@ -227,7 +296,40 @@ species Child parent: Child_Master {
 		} 
 	}
 	
-	// Add quarantine modification to movement
+	/********* Child-specific movement processes ***********/
+	// Morning: go to school until schools are closed
+	action move_morning {
+		if outside_sim = true {
+			self.location <- point(-1, -1, 0);
+			outside_sim <- false;
+		} else if weekday in ["Mo", "Tu", "We", "Th", "Fr"] and school_open = true {
+			// Morning: children go to school
+			self.location <- (School at indexSchool).location;
+		} 
+	}
+	
+	action move_afternoon {
+		// Afternoon: some proportion go to random GQ or NH, some go to random community location, others go home;
+		// Check for NH visit. If not, check for GQ visit (same prob). If not, check for community
+		// Varies based on weekday vs. weekend
+		if outside_sim = true {
+			// If infecting someone in another sub-population, set location outside the grid
+			self.location <- point(-1, -1, 0);
+			outside_sim <- false;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(NH).location;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(GQ).location;
+		} else if flip(prob_community_wkdy * comm_open_pct) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
+			self.location <- one_of(Community).location;
+		} else if flip(prob_community_wknd * comm_open_pct) and weekday in ["Sa", "Su"]{
+			self.location <- one_of(Community).location;
+		} else {
+			self.location <- (Home at indexHome).location;
+		}
+	}
+	
+	// Add quarantine modification to actions and movement
 	reflex take_actions {		
 		// Move through SEIR states
 		if self.sus = true {
@@ -293,7 +395,49 @@ species Adult parent: Adult_Master {
 		} 
 	}
 	
-	// Add quarantine modification to movement
+	/********* Adult-specific movement processes ***********/
+	// Teachers stop going to schools when schools close
+	action move_morning {
+		if outside_sim = true {
+			self.location <- point(-1, -1, 0);
+			outside_sim <- false;
+		} else if weekday in ["Mo", "Tu", "We", "Th", "Fr"] and flip(work_open_pct) {
+			if indexWorkplace >= 0 {
+				self.location <- (Workplace at indexWorkplace).location;
+			} else if indexSchool >= 0 {
+				if school_open = true { 
+					self.location <- (School at indexSchool).location; 	// Teachers work at school
+				}
+			} else if indexNH >= 0 {
+				self.location <- (NH at indexNH).location;			// NH workers
+			} else if indexGQ >= 0 {
+				self.location <- (GQ at indexGQ).location;			// GQ workers
+			}
+		}
+	}
+	
+	action move_afternoon {
+		// Afternoon: some proportion go to random GQ or NH, some go to random community location, others go home;
+		// Check for NH visit. If not, check for GQ visit (same prob). If not, check for community
+		// Varies based on weekday vs. weekend
+		if outside_sim = true {
+			// If infecting someone in another sub-population, set location outside the grid
+			self.location <- point(-1, -1, 0);
+			outside_sim <- false;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(NH).location;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(GQ).location;
+		} else if flip(prob_community_wkdy * comm_open_pct) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
+			self.location <- one_of(Community).location;
+		} else if flip(prob_community_wknd * comm_open_pct) and weekday in ["Sa", "Su"]{
+			self.location <- one_of(Community).location;
+		} else {
+			self.location <- (Home at indexHome).location;
+		}
+	}
+	
+	// Add quarantine modification to actions and movement
 	reflex take_actions {		
 		// Move through SEIR states
 		if self.sus = true {
@@ -332,7 +476,7 @@ species Adult parent: Adult_Master {
 species Senior parent: Senior_Master {
 	bool detected <- false;
 	int detect_counter <- -1;
-	
+
 	// Count-down to infection being detected
 	// Quarantine self on detection
 	reflex increment_detection when: detect_counter >= 0 and daypart = "evening" {
@@ -358,8 +502,29 @@ species Senior parent: Senior_Master {
 			self.quarantine_counter <- 14;
 		} 
 	}
+
+	action move_afternoon {
+		// Afternoon: some proportion go to random GQ or NH, some go to random community location, others go home;
+		// Check for NH visit. If not, check for GQ visit (same prob). If not, check for community
+		// Varies based on weekday vs. weekend
+		if outside_sim = true {
+			// If infecting someone in another sub-population, set location outside the grid
+			self.location <- point(-1, -1, 0);
+			outside_sim <- false;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(NH).location;
+		} else if flip(prob_nhgq_visit) {
+			self.location <- one_of(GQ).location;
+		} else if flip(prob_community_wkdy * comm_open_pct) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
+			self.location <- one_of(Community).location;
+		} else if flip(prob_community_wknd * comm_open_pct) and weekday in ["Sa", "Su"]{
+			self.location <- one_of(Community).location;
+		} else {
+			self.location <- (Home at indexHome).location;
+		}
+	}
 	
-	// Add quarantine modification to movement
+	// Add quarantine modification to actions and movement
 	reflex take_actions {		
 		// Move through SEIR states
 		if self.sus = true {
@@ -415,11 +580,18 @@ species QuarantineFlag {
 	}
 }
 
-/* Run the simulation in batch mode */
-experiment TestAndQuarantine type: batch repeat: 1 until: (day >= max_days) parallel: true {
+/* Experiment for voluntary work-from-home as the only intervention after June 7th */
+experiment Voluntary_WFH type: batch repeat: 1 until: (day >= max_days) parallel: true {
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
-		
+
+	parameter "Workplace closure" var: work_close_pcts init: [0.395, 0.625, 0.67, 0.9, 0.395];
+	parameter "Community closure" var: comm_close_pcts init: [0.395, 0.625, 0.67, 0.9, 0.0];
+	parameter "NH/GQ closure" var: nhgq_close_pcts init: [1.0, 1.0, 1.0, 1.0, 1.0, 0.999];	
+
+	int school_open_day <- 221;						// Simulation day when schools open
+	bool school_open <- true;						// Flag for whether school is open
+
 	init{
 		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2];
 		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2];
@@ -432,17 +604,3 @@ experiment TestAndQuarantine type: batch repeat: 1 until: (day >= max_days) para
 		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0];
 	}
 }
-
-experiment UNIT_TEST_QUARANTINE type:gui until: (day >= max_days) {
-	// Inspect Toddler[0], Child[0], Adult[0], and Senior[0]
-	// Make sure quarantine occurs with proper timing, that movement stops during quarantine, and restarts after
-	// Also inspect different Toddler/Child/Adult/Senior agents and make sure they don't quarantine
-	
-	float seed <- 1.0;
-	parameter "Detection prob" var: detect_prob init: 1.0; // Make detection guaranteed to track quarantine process
-	parameter "Unit testing" var: initialize_unit_test init: true;
-	parameter "Number infectious" var: nb_inf_init init: 0;
-	
-}
-
-
