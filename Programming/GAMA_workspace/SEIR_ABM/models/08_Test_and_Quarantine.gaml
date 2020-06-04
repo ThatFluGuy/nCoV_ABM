@@ -11,6 +11,9 @@ model TestandQuarantine
 /* persons are quarantined until the end of their possible latent period. Use March 12th as the    */
 /* date the intervention starts. Note that this leaves nursing homes, group quarters, schools, and */
 /* workplace fully open.																		   */
+/* To quarantine households, this program uses the QuarantineFlag agent. These map 1:1 with HH's   */
+/* and track whether quarantine is in place. Hosts check whether their household is in quarantine  */
+/* (via QuarantineFlag) before moving.															   */
 
 import "../models/00_Base_Model.gaml"
 
@@ -38,6 +41,7 @@ global {
 	init {		
 		// Create settings (geographies where agents can be)
 		create Home number: nb_home_init;
+		create QuarantineFlag number: nb_home_init;
 		create School number: nb_school_init;
 		create Workplace number: nb_work_init;
 		create Community number: nb_comm_init;
@@ -129,8 +133,6 @@ global {
 /* TODDLER, a subset of Host ages 0-5 who is not assigned to a "school" (e.g. daycare, pre-school) */
 species Toddler parent: Toddler_Master {
 	bool detected <- false;
-	bool quarantined <- false;
-	int quarant_counter <- -1;
 	int detect_counter <- -1;
 	
 	// Count-down to infection being detected
@@ -143,46 +145,20 @@ species Toddler parent: Toddler_Master {
 		}
 	}
 	
-	// Count-down for quarantine duration
-	reflex increment_quarantine when: quarant_counter >= 0 and daypart = "evening" {
-		quarant_counter <- quarant_counter - 1;
-		if quarant_counter = 0 {
-			quarantined <- false;
-		}
-	}
-	
 	// Modify make_symptomatic action to include detection probability
 	action make_symptomatic {
 		sym <- true;
-		if flip(detect_prob){
+		if flip(detect_prob) and day >= trace_start_day {
 			detect_counter <- 2;
 		}
 	}
 	
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
-		quarantined <- true;
-		quarant_counter <- 14;
-		ask agents of_generic_species Toddler where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Child where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Adult where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Senior where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
+		ask (QuarantineFlag at self.indexHome) {
+			self.under_quarantine <- true;
+			self.quarantine_counter <- 14;
+		} 
 	}
 	
 	// Add quarantine modification to movement
@@ -208,7 +184,7 @@ species Toddler parent: Toddler_Master {
 		}
 		
 		// After updating status, move as appropriate
-		if quarantined = false {
+		if (QuarantineFlag at self.indexHome).under_quarantine = false {
 			if daypart = "morning" {
 				do move_morning;
 			} else if daypart = "afternoon" {
@@ -223,8 +199,6 @@ species Toddler parent: Toddler_Master {
 /* CHILD, a subset of Host ages 0-17, has a school (could be daycare for age <6) */
 species Child parent: Child_Master {
 	bool detected <- false;
-	bool quarantined <- false;
-	int quarant_counter <- -1;
 	int detect_counter <- -1;
 	
 	// Count-down to infection being detected
@@ -237,48 +211,22 @@ species Child parent: Child_Master {
 		}
 	}
 	
-	// Count-down for quarantine duration
-	reflex increment_quarantine when: quarant_counter >= 0 and daypart = "evening" {
-		quarant_counter <- quarant_counter - 1;
-		if quarant_counter = 0 {
-			quarantined <- false;
-		}
-	}
-	
 	// Modify make_symptomatic action to include detection probability
 	action make_symptomatic {
 		sym <- true;
-		if flip(detect_prob){
+		if flip(detect_prob) and day >= trace_start_day {
 			detect_counter <- 2;
 		}
 	}
 	
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
-		quarantined <- true;
-		quarant_counter <- 14;
-		ask agents of_generic_species Toddler where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Child where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Adult where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Senior where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
+		ask (QuarantineFlag at self.indexHome) {
+			self.under_quarantine <- true;
+			self.quarantine_counter <- 14;
+		} 
 	}
-
+	
 	// Add quarantine modification to movement
 	reflex take_actions {		
 		// Move through SEIR states
@@ -302,7 +250,7 @@ species Child parent: Child_Master {
 		}
 		
 		// After updating status, move as appropriate
-		if quarantined = false {
+		if (QuarantineFlag at self.indexHome).under_quarantine = false {
 			if daypart = "morning" {
 				do move_morning;
 			} else if daypart = "afternoon" {
@@ -317,8 +265,6 @@ species Child parent: Child_Master {
 /* ADULT, a subset of Host, ages 18 - 74. Could have a workplace, which could be a school, NH, or GQ */
 species Adult parent: Adult_Master {
 	bool detected <- false;
-	bool quarantined <- false;
-	int quarant_counter <- -1;
 	int detect_counter <- -1;
 	
 	// Count-down to infection being detected
@@ -331,47 +277,22 @@ species Adult parent: Adult_Master {
 		}
 	}
 	
-	// Count-down for quarantine duration
-	reflex increment_quarantine when: quarant_counter >= 0 and daypart = "evening" {
-		quarant_counter <- quarant_counter - 1;
-		if quarant_counter = 0 {
-			quarantined <- false;
-		}
-	}
-	
 	// Modify make_symptomatic action to include detection probability
 	action make_symptomatic {
 		sym <- true;
-		if flip(detect_prob){
+		if flip(detect_prob) and day >= trace_start_day {
 			detect_counter <- 2;
 		}
 	}
 	
-		action make_quarantine {
-		quarantined <- true;
-		quarant_counter <- 14;
-		ask agents of_generic_species Toddler where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Child where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Adult where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Senior where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
+	// Trigger detected status and quarantine of household members
+	action make_quarantine {
+		ask (QuarantineFlag at self.indexHome) {
+			self.under_quarantine <- true;
+			self.quarantine_counter <- 14;
+		} 
 	}
-
+	
 	// Add quarantine modification to movement
 	reflex take_actions {		
 		// Move through SEIR states
@@ -395,7 +316,7 @@ species Adult parent: Adult_Master {
 		}
 		
 		// After updating status, move as appropriate
-		if quarantined = false {
+		if (QuarantineFlag at self.indexHome).under_quarantine = false {
 			if daypart = "morning" {
 				do move_morning;
 			} else if daypart = "afternoon" {
@@ -410,8 +331,6 @@ species Adult parent: Adult_Master {
 /* SENIOR, as subset of Host, ages 75 - 99 (no workplace) */
 species Senior parent: Senior_Master {
 	bool detected <- false;
-	bool quarantined <- false;
-	int quarant_counter <- -1;
 	int detect_counter <- -1;
 	
 	// Count-down to infection being detected
@@ -424,47 +343,22 @@ species Senior parent: Senior_Master {
 		}
 	}
 	
-	// Count-down for quarantine duration
-	reflex increment_quarantine when: quarant_counter >= 0 and daypart = "evening" {
-		quarant_counter <- quarant_counter - 1;
-		if quarant_counter = 0 {
-			quarantined <- false;
-		}
-	}
-	
 	// Modify make_symptomatic action to include detection probability
 	action make_symptomatic {
 		sym <- true;
-		if flip(detect_prob){
+		if flip(detect_prob) and day >= trace_start_day {
 			detect_counter <- 2;
 		}
 	}
 	
+	// Trigger detected status and quarantine of household members
 	action make_quarantine {
-		quarantined <- true;
-		quarant_counter <- 14;
-		ask agents of_generic_species Toddler where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Child where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Adult where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
-		ask agents of_generic_species Senior where (each.indexHome = self.indexHome) {
-			self.quarantined <- true;
-			self.quarant_counter <- 14;
-			self.location <- (Home at self.indexHome).location;
-		}
+		ask (QuarantineFlag at self.indexHome) {
+			self.under_quarantine <- true;
+			self.quarantine_counter <- 14;
+		} 
 	}
-
+	
 	// Add quarantine modification to movement
 	reflex take_actions {		
 		// Move through SEIR states
@@ -488,7 +382,7 @@ species Senior parent: Senior_Master {
 		}
 		
 		// After updating status, move as appropriate
-		if quarantined = false {
+		if (QuarantineFlag at self.indexHome).under_quarantine = false {
 			if daypart = "morning" {
 				do move_morning;
 			} else if daypart = "afternoon" {
@@ -508,6 +402,17 @@ species NHresident parent: NHresident_Master {
 species GQresident parent: GQresident_Master {
 }
 
+species QuarantineFlag {
+	bool under_quarantine <- false;
+	int quarantine_counter <- -1;
+	
+	reflex increment_quarantine when: quarantine_counter >= 0 and daypart = "evening"{
+		quarantine_counter <- quarantine_counter - 1;
+		if quarantine_counter = 0 {
+			under_quarantine <- false;
+		}
+	}
+}
 
 /* Run the simulation in batch mode */
 experiment TestAndQuarantine type: batch repeat: 1 until: (day >= max_days) parallel: true {
