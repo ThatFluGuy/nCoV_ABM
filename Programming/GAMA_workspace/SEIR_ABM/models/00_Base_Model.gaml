@@ -168,26 +168,28 @@ global {
 		n_cross_inf <- 0;
 
 		// Update population count tracking variables
-		sus_tod_list[day] <- Toddler_Master count (each.sus);
-		sus_chi_list[day] <- Child_Master count (each.sus);
-		sus_adu_list[day] <- Adult_Master count (each.sus);
-		sus_sen_list[day] <- Senior_Master count (each.sus);
-		sus_nh_list[day] <- NHresident_Master count (each.sus);
-		sus_gq_list[day] <- GQresident_Master count (each.sus);
-		
-		exp_tod_list[day] <- Toddler_Master count (each.exp);
-		exp_chi_list[day] <- Child_Master count (each.exp);
-		exp_adu_list[day] <- Adult_Master count (each.exp);
-		exp_sen_list[day] <- Senior_Master count (each.exp);
-		exp_nh_list[day] <- NHresident_Master count (each.exp);
-		exp_gq_list[day] <- GQresident_Master count (each.exp);
-		
-		inf_tod_list[day] <- Toddler_Master count (each.inf);
-		inf_chi_list[day] <- Child_Master count (each.inf);
-		inf_adu_list[day] <- Adult_Master count (each.inf);
-		inf_sen_list[day] <- Senior_Master count (each.inf);
-		inf_nh_list[day] <- NHresident_Master count (each.inf);
-		inf_gq_list[day] <- GQresident_Master count (each.inf);
+		if daypart = "evening" {
+			sus_tod_list[day] <- Toddler_Master count (each.sus);
+			sus_chi_list[day] <- Child_Master count (each.sus);
+			sus_adu_list[day] <- Adult_Master count (each.sus);
+			sus_sen_list[day] <- Senior_Master count (each.sus);
+			sus_nh_list[day] <- NHresident_Master count (each.sus);
+			sus_gq_list[day] <- GQresident_Master count (each.sus);
+			
+			exp_tod_list[day] <- Toddler_Master count (each.exp);
+			exp_chi_list[day] <- Child_Master count (each.exp);
+			exp_adu_list[day] <- Adult_Master count (each.exp);
+			exp_sen_list[day] <- Senior_Master count (each.exp);
+			exp_nh_list[day] <- NHresident_Master count (each.exp);
+			exp_gq_list[day] <- GQresident_Master count (each.exp);
+			
+			inf_tod_list[day] <- Toddler_Master count (each.inf);
+			inf_chi_list[day] <- Child_Master count (each.inf);
+			inf_adu_list[day] <- Adult_Master count (each.inf);
+			inf_sen_list[day] <- Senior_Master count (each.inf);
+			inf_nh_list[day] <- NHresident_Master count (each.inf);
+			inf_gq_list[day] <- GQresident_Master count (each.inf);
+		}
 	}
 	
 	action update_day {
