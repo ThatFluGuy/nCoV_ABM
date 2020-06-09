@@ -6,7 +6,7 @@
 
 model MultiIntervention
 
-/* Starting June 8th (simulation day 129), explore the possible effects of different interventions on */
+/* Starting June 22nd (simulation day 143) explore the possible effects of different interventions on */
 /* COVID-19 hospitalizations into the future. Interventions to test include promoting voluntary work- */
 /* from-home to the extent possible, cocooning seniors, and test-and quarantine. This program allows  */
 /* each of these different interventions, with settings in different Experiments used to implement    */
@@ -33,7 +33,7 @@ global {
 	float comm_open_pct <- 1.0;						// Percent community site visits occurring during specified time period
 	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
 
-	list<int>   change_days <- [34, 41, 45, 57, 129];				// Simulation days when work interventions change	
+	list<int>   change_days <- [34, 41, 45, 57, 143];				// Simulation days when work interventions change	
 	list<float> work_close_pcts <- [0.3555, 0.5625, 0.603, 0.81, 0.395];	// Percent reductions in work contacts at different periods
 	list<float> comm_close_pcts <- [0.3555, 0.5625, 0.603, 0.81, 0.0];		// Percent reductions in community contacts at different periods
 	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0, 0.99];		// Percent reductions in NH/GQ visits 
@@ -44,13 +44,13 @@ global {
 
 	// Test-and-quarantine variables
 	bool use_test_trace <- false;
-	int trace_start_day <- 129;
+	int trace_start_day <- 143;
 	float detect_prob <- 0.5;
 	float quarantine_prob <- 0.7;
 	
 	// Senior shelter-in-place variable
 	bool use_senior_cocoon <- false;
-	int cocoon_start_day <- 129;
+	int cocoon_start_day <- 143;
 	float cocoon_prob <- 0.9;
 	float senior_travel_prob <- 1.0;
 	
@@ -66,8 +66,6 @@ global {
 		create GQ number: nb_gq_init;
 		
 		// Create hosts
-		create Adult number: nb_inf_init with: [sus::false, inf::true]; // Starting number infectious
-		
 		create Toddler from: csv_file("../includes/sim_Toddler_50k_" + model_number + ".csv", true) 
 					with: [sus::true, indexHome::int(get("indexHome")), 
 						ageyrs::int(get("ageyrs")), male::bool(get("male"))];
@@ -85,7 +83,15 @@ global {
 		create NHresident from: csv_file("../includes/sim_NH_50k_" + model_number + ".csv", true)
 					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexNH::int(get("indexNH"))];
 		create GQresident from: csv_file("../includes/sim_GQ_50k_" + model_number + ".csv", true)
-					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexGQ::int(get("indexGQ"))];					
+					with: [sus::true, ageyrs::int(get("ageyrs")), male::bool(get("male")), indexGQ::int(get("indexGQ"))];
+					
+		loop times: nb_inf_init {
+			ask one_of(Adult){
+				self.sus <- false;
+				self.inf <- true;
+				self.counter_inf <- dur_infect[rnd_choice([0.25, 0.5, 0.25])];
+			}
+		} 					
 	}
 
 	// Modify the update_counts action to track Toddler not Toddler_Master etc
@@ -602,55 +608,97 @@ species QuarantineFlag {
 	}
 }
 
-/* Experiment for voluntary work-from-home as the only intervention after June 7th */
+/* Experiment with no interventions after June 21st */
+experiment end_all_interventions type: batch repeat: 1 until: (day >= max_days) parallel: true {
+	float seedValue <- rnd(1.0, 10000.0);
+	float seed <- seedValue;
+
+	parameter "Starting infectious" var: nb_inf_init init: 2;
+
+	// Paramaters for work/community closures
+	list<float> wcp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
+	list<float> ccp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
+	
+	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
+	parameter "Community closure" var: comm_close_pcts init: ccp_top;
+	
+	init{
+		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+	}
+}
+
+/* Experiment for voluntary work-from-home as the only intervention after June 21st */
 experiment Voluntary_WFH type: batch repeat: 1 until: (day >= max_days) parallel: true {
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 
-	parameter "Starting infectious" var: nb_inf_init init: 1;
+	parameter "Starting infectious" var: nb_inf_init init: 2;
 
-	// Parameters for closures
-	parameter "Workplace closure" var: work_close_pcts init: [0.395, 0.625, 0.67, 0.9, 0.395];
-	parameter "Community closure" var: comm_close_pcts init: [0.395, 0.625, 0.67, 0.9, 0.0];
-	parameter "NH/GQ closure" var: nhgq_close_pcts init: [1.0, 1.0, 1.0, 1.0, 1.0, 0.999];
+	// Paramaters for work/community closures
+	list<float> wcp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.395];
+	list<float> ccp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
 	
-	parameter "School open day" var: school_open_day init: 221;
+	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
+	parameter "Community closure" var: comm_close_pcts init: ccp_top;
 	
 	init{
-		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::1];
-		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::1];
-		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::1];
-		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
+		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0, work_close_pcts::wcp_top, comm_close_pcts::ccp_top];
 	}
 }
 
+/* Experiment for both voluntary work-from-home and keeping schools closed */
 experiment WFH_Plus_Schools_Close type: batch repeat: 1 until: (day >= max_days) parallel: true {
 		float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 
-	parameter "Starting infectious" var: nb_inf_init init: 1;
+	parameter "Starting infectious" var: nb_inf_init init: 2;
 	
-	parameter "Workplace closure" var: work_close_pcts init: [0.3555, 0.5625, 0.603, 0.81, 0.395];
-	parameter "Community closure" var: comm_close_pcts init: [0.3555, 0.5625, 0.603, 0.81, 0.0];
-	parameter "NH/GQ closure" var: nhgq_close_pcts init: [1.0, 1.0, 1.0, 1.0, 1.0, 0.999];	
+	// Paramaters for work/community closuresa
+	list<float> wcp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.395];
+	list<float> ccp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
+	
+	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
+	parameter "Community closure" var: comm_close_pcts init: ccp_top;
 
 	// Parameters for schools
-	parameter "School open day" var: school_open_day init: 366;	
+	int sod_top <- 366;
+	
+	parameter "School open day" var: school_open_day init: sod_top;	
 
 	init{
-		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2];
-		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2];
-		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0];
-		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
+		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0,
+			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
 	}
 }
