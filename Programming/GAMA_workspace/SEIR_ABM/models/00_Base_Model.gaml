@@ -60,8 +60,8 @@ global {
 	float prob_community_wkdy <- 0.4; 	// Probability of going to community location during weekday afternoon
 	float prob_community_wknd <- 0.46;  // Probability of going to community location during weekend afternoon
 	float prob_nhgq_visit <- 0.001;		// Probability of visiting a NH or GQ location during afternoon
-	float beta_HH  <- 0.024;			// Probability of infection given contact in household
-	float beta_COM <- 0.012;			// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.027;			// Probability of infection given contact in household
+	float beta_COM <- 0.010;			// Probability of infection given contact in workplace/community
 	
 	// Probability that infection will result in hospitalization, by age (in years)
 	list<float>hosp_prob <- [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 

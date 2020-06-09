@@ -375,12 +375,12 @@ species GQresident parent: GQresident_Master {
 }
 
 /* Parameter optimization */
-experiment Hill type: batch repeat: 3 until: (day >= max_days) parallel: true {
-	parameter "HH beta" var: beta_HH among: [0.015, 0.0175, 0.02, 0.0225, 0.025, 0.0275, 0.03];
-	parameter "COM beta" var: beta_COM among: [0.005, 0.0075, 0.01, 0.0125, 0.015]; 
-	parameter "Scale" var: scale among: [0.75, 0.8, 0.85, 0.9, 0.95, 1.0];
+experiment Tabu_Search type: batch repeat: 3 until: (day >= max_days) parallel: true {
+	parameter "HH beta" var: beta_HH min: 0.02 max: 0.03 step: 0.001;
+	parameter "COM beta" var: beta_COM min: 0.009 max: 0.015 step: 0.001; 
+	parameter "Scale" var: scale min: 0.85 max: 1.0 step: 0.01;
 	
-	method hill_climbing minimize: sum_sq_err iter_max: 50;
+	method tabu minimize: sum_sq_err iter_max: 50 tabu_list_size: 5;
 	
 	reflex end_of_runs{
 		ask simulations {

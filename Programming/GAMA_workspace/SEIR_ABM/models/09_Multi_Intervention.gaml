@@ -16,13 +16,12 @@ import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
 global {
-	int max_days <- 365;
+	int max_days <- 366;
 
-	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
-	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
+	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
 	
-	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.027;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -35,12 +34,12 @@ global {
 	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
 
 	list<int>   change_days <- [34, 41, 45, 57, 129];				// Simulation days when work interventions change	
-	list<float> work_close_pcts <- [0.395, 0.625, 0.67, 0.9, 0.395];	// Percent reductions in work contacts at different periods
-	list<float> comm_close_pcts <- [0.395, 0.625, 0.67, 0.9, 0.0];		// Percent reductions in community contacts at different periods
+	list<float> work_close_pcts <- [0.3555, 0.5625, 0.603, 0.81, 0.395];	// Percent reductions in work contacts at different periods
+	list<float> comm_close_pcts <- [0.3555, 0.5625, 0.603, 0.81, 0.0];		// Percent reductions in community contacts at different periods
 	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0, 0.99];		// Percent reductions in NH/GQ visits 
 
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
-	int school_open_day <- 366;						// Simulation day when schools open
+	int school_open_day <- 221;						// Simulation day when schools open
 	bool school_open <- true;						// Flag for whether school is open
 
 	// Test-and-quarantine variables
@@ -48,6 +47,12 @@ global {
 	int trace_start_day <- 129;
 	float detect_prob <- 0.5;
 	float quarantine_prob <- 0.7;
+	
+	// Senior shelter-in-place variable
+	bool use_senior_cocoon <- false;
+	int cocoon_start_day <- 129;
+	float cocoon_prob <- 0.9;
+	float senior_travel_prob <- 1.0;
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		
@@ -175,6 +180,15 @@ global {
 		} else {
 			school_open <- true;
 		}
+		
+		// Flag for senior cocoon probability
+		if use_senior_cocoon = true {
+			if day < cocoon_start_day {
+				senior_travel_prob <- 1.0;
+			} else {
+				senior_travel_prob <- cocoon_prob;
+			}
+		}
 	}
 }
 
@@ -204,8 +218,10 @@ species Toddler parent: Toddler_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 	
@@ -291,8 +307,10 @@ species Child parent: Child_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 	
@@ -390,8 +408,10 @@ species Adult parent: Adult_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 	
@@ -498,8 +518,10 @@ species Senior parent: Senior_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 
@@ -511,13 +533,13 @@ species Senior parent: Senior_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit * senior_travel_prob) {
 			self.location <- one_of(NH).location;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit * senior_travel_prob) {
 			self.location <- one_of(GQ).location;
-		} else if flip(prob_community_wkdy * comm_open_pct) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
+		} else if flip(prob_community_wkdy * comm_open_pct * senior_travel_prob) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
 			self.location <- one_of(Community).location;
-		} else if flip(prob_community_wknd * comm_open_pct) and weekday in ["Sa", "Su"]{
+		} else if flip(prob_community_wknd * comm_open_pct * senior_travel_prob) and weekday in ["Sa", "Su"]{
 			self.location <- one_of(Community).location;
 		} else {
 			self.location <- (Home at indexHome).location;
@@ -585,12 +607,40 @@ experiment Voluntary_WFH type: batch repeat: 1 until: (day >= max_days) parallel
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 
+	parameter "Starting infectious" var: nb_inf_init init: 1;
+
+	// Parameters for closures
 	parameter "Workplace closure" var: work_close_pcts init: [0.395, 0.625, 0.67, 0.9, 0.395];
 	parameter "Community closure" var: comm_close_pcts init: [0.395, 0.625, 0.67, 0.9, 0.0];
+	parameter "NH/GQ closure" var: nhgq_close_pcts init: [1.0, 1.0, 1.0, 1.0, 1.0, 0.999];
+	
+	parameter "School open day" var: school_open_day init: 221;
+	
+	init{
+		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::1];
+		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::1];
+		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::1];
+		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0];
+		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0];
+	}
+}
+
+experiment WFH_Plus_Schools_Close type: batch repeat: 1 until: (day >= max_days) parallel: true {
+		float seedValue <- rnd(1.0, 10000.0);
+	float seed <- seedValue;
+
+	parameter "Starting infectious" var: nb_inf_init init: 1;
+	
+	parameter "Workplace closure" var: work_close_pcts init: [0.3555, 0.5625, 0.603, 0.81, 0.395];
+	parameter "Community closure" var: comm_close_pcts init: [0.3555, 0.5625, 0.603, 0.81, 0.0];
 	parameter "NH/GQ closure" var: nhgq_close_pcts init: [1.0, 1.0, 1.0, 1.0, 1.0, 0.999];	
 
-	int school_open_day <- 221;						// Simulation day when schools open
-	bool school_open <- true;						// Flag for whether school is open
+	// Parameters for schools
+	parameter "School open day" var: school_open_day init: 366;	
 
 	init{
 		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2];

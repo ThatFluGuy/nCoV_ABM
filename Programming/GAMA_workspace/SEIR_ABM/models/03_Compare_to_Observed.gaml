@@ -20,12 +20,12 @@ import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
 global {
-	int max_days <- 120;
+	int max_days <- 130;
 
 	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
-	
-	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
+		
+	float beta_HH  <- 0.027;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -38,7 +38,7 @@ global {
 	float work_open_pct <- 1.0;				// Percent of work occuring during specified time period
 	int school_close_day <- 41; 				// Close schools on day 41 of the simulation (March 12)
 	list<int> close_days <- [34, 41, 45, 57];	// Simulation days when interventions change	
-	list<float> close_pcts <- [0.395, 0.625, 0.67, 0.9];	// Percent reductions in contacts at different intervention periods
+	list<float> close_pcts <- [0.3555, 0.5625, 0.603, 0.81];	// Percent reductions in contacts at different intervention periods
 
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
