@@ -158,15 +158,11 @@ global {
 			comm_open_pct <- 1-comm_close_pcts[2];
 			work_open_pct <- 1-work_close_pcts[2];
 			prob_nhgq_visit <- 1-nhgq_close_pcts[2];
-		} else if day < change_days[4]{
+		} else {
 			comm_open_pct <- 1-comm_close_pcts[3];
 			work_open_pct <- 1-work_close_pcts[3];
 			prob_nhgq_visit <- 1-nhgq_close_pcts[3];
-		} else {
-			comm_open_pct <- 1-comm_close_pcts[4];
-			work_open_pct <- 1-work_close_pcts[4];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[4];
-		}
+		} 
 		
 		// Flag for whether school is in session
 		if day < school_close_day {

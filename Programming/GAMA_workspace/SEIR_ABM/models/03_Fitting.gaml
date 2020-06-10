@@ -163,26 +163,22 @@ global {
 			comm_open_pct <- 1.0;
 			work_open_pct <- 1.0;
 		} else if day < change_days[1] {
-			comm_open_pct <- 1-comm_close_pcts[0];
-			work_open_pct <- 1-work_close_pcts[0];
+			comm_open_pct <- 1-(comm_close_pcts[0]*scale);
+			work_open_pct <- 1-(work_close_pcts[0]*scale);
 			prob_nhgq_visit <- 1-nhgq_close_pcts[0];
 		} else if day < change_days[2] {
-			comm_open_pct <- 1-comm_close_pcts[1];
-			work_open_pct <- 1-work_close_pcts[1];
+			comm_open_pct <- 1-(comm_close_pcts[1]*scale);
+			work_open_pct <- 1-(work_close_pcts[1]*scale);
 			prob_nhgq_visit <- 1-nhgq_close_pcts[1];
 		} else if day < change_days[3] {
-			comm_open_pct <- 1-comm_close_pcts[2];
-			work_open_pct <- 1-work_close_pcts[2];
+			comm_open_pct <- 1-(comm_close_pcts[2]*scale);
+			work_open_pct <- 1-(work_close_pcts[2]*scale);
 			prob_nhgq_visit <- 1-nhgq_close_pcts[2];
 		} else if day < change_days[4]{
-			comm_open_pct <- 1-comm_close_pcts[3];
-			work_open_pct <- 1-work_close_pcts[3];
+			comm_open_pct <- 1-(comm_close_pcts[3]*scale);
+			work_open_pct <- 1-(work_close_pcts[3]*scale);
 			prob_nhgq_visit <- 1-nhgq_close_pcts[3];
-		} else {
-			comm_open_pct <- 1-comm_close_pcts[4];
-			work_open_pct <- 1-work_close_pcts[4];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[4];
-		}
+		} 
 		
 		// Flag for whether school is in session
 		if day < school_close_day {
@@ -351,8 +347,8 @@ species GQresident parent: GQresident_Master {
 
 /* Parameter optimization */
 experiment Tabu_Search type: batch repeat: 3 until: (day >= max_days) parallel: true {
-	parameter "HH beta" var: beta_HH min: 0.02 max: 0.03 step: 0.001;
-	parameter "COM beta" var: beta_COM min: 0.009 max: 0.015 step: 0.001; 
+	parameter "HH beta" var: beta_HH min: 0.019 max: 0.028 step: 0.001;
+	parameter "COM beta" var: beta_COM min: 0.006 max: 0.015 step: 0.001; 
 	parameter "Scale" var: scale min: 0.85 max: 1.0 step: 0.01;
 	
 	method tabu minimize: sum_sq_err iter_max: 50 tabu_list_size: 5;
