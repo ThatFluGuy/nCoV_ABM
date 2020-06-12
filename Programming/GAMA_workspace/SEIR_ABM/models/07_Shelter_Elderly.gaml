@@ -239,42 +239,32 @@ species Adult parent: Adult_Master {
 	
 	
 	action move_morning {
+		float my_travel_prob <- (self.ageyrs < 65? 1.0:prob_senior_travel);
 		if outside_sim = true {
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if day < close_day {
-			// Prior to start of intervention
-			if weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
-				if indexWorkplace >= 0 {
-					self.location <- (Workplace at indexWorkplace).location;
-				} else if indexSchool >= 0 { 
-					self.location <- (School at indexSchool).location; 	// Teachers work at school
-				} else if indexNH >= 0 {
-					self.location <- (NH at indexNH).location;			// NH workers
-				} else if indexGQ >= 0 {
-					self.location <- (GQ at indexGQ).location;			// GQ workers
-				}
+		} else if weekday in ["Mo", "Tu", "We", "Th", "Fr"] and flip(my_travel_prob) {
+			if indexWorkplace >= 0 {
+				self.location <- (Workplace at indexWorkplace).location;
+			} else if indexSchool >= 0 {
+				self.location <- (School at indexSchool).location; 	// Teachers work at school
+			} else if indexNH >= 0 {
+				self.location <- (NH at indexNH).location;			// NH workers
+			} else if indexGQ >= 0 {
+				self.location <- (GQ at indexGQ).location;			// GQ workers
+			} else {
+				self.location <- (Home at indexHome).location;
 			}
 		} else {
-			// After start of intervention, social distancing for those aged 65+ only
-			// Symptomatics do not go to NH
-			if weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
-				if self.ageyrs < 65 or flip(work_open_pct) { 
-					if indexWorkplace >= 0 {
-						self.location <- (Workplace at indexWorkplace).location;
-					} else if indexSchool >= 0 { 
-						self.location <- (School at indexSchool).location; 	// Teachers work at school
-					} else if indexNH >= 0 and self.sym = false {
-						self.location <- (NH at indexNH).location;			// NH workers
-					} else if indexGQ >= 0 {
-						self.location <- (GQ at indexGQ).location;			// GQ workers
-					}
-				}
-			}
+			self.location <- (Home at indexHome).location;
 		}
 	}
 	
 	action move_afternoon {
+		// Afternoon: some proportion go to random GQ or NH, some go to random community location, others go home;
+		// Check for NH visit. If not, check for GQ visit (same prob). If not, check for community
+		// Varies based on weekday vs. weekend
+		float my_travel_prob <- (self.ageyrs < 65? 1.0:prob_senior_travel);
 		if outside_sim = true {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
@@ -283,23 +273,13 @@ species Adult parent: Adult_Master {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
-		} else if self.ageyrs <65 { // Non-seniors not affected by cocooning
-			if flip(prob_community_wkdy) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
-				self.location <- one_of(Community).location;
-			} else if flip(prob_community_wknd) and weekday in ["Sa", "Su"]{
-				self.location <- one_of(Community).location;		
-			} else {
-				self.location <- (Home at indexHome).location;
-			}
-		} else { // Seniors affected by cocooning
-			if flip(prob_community_wkdy * prob_senior_travel) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
-				self.location <- one_of(Community).location;
-			} else if flip(prob_community_wknd * prob_senior_travel) and weekday in ["Sa", "Su"] {
-				self.location <- one_of(Community).location;
-			} else {
-				self.location <- (Home at indexHome).location;
-			}
-		}	
+		} else if flip(prob_community_wkdy * my_travel_prob) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
+			self.location <- one_of(Community).location;
+		} else if flip(prob_community_wknd * my_travel_prob) and weekday in ["Sa", "Su"]{
+			self.location <- one_of(Community).location;
+		} else {
+			self.location <- (Home at indexHome).location;
+		}
 	}
 }
 
