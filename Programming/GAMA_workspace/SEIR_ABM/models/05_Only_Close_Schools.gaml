@@ -20,8 +20,8 @@ global {
 	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
 	//string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 	
-	float beta_HH  <- 0.027;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.008;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
