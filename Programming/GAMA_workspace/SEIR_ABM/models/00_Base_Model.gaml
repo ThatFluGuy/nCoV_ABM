@@ -29,7 +29,8 @@ model BaseModel
 global {
 	int max_days <- 150;				// Number of days to simulate
 	
-	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 	
 	// Initialization variables
 	float step <- 8 #h;					// Time step per model iteration (8 hours)
@@ -60,8 +61,8 @@ global {
 	float prob_community_wkdy <- 0.4; 	// Probability of going to community location during weekday afternoon
 	float prob_community_wknd <- 0.46;  // Probability of going to community location during weekend afternoon
 	float prob_nhgq_visit <- 0.001;		// Probability of visiting a NH or GQ location during afternoon
-	float beta_HH  <- 0.027;			// Probability of infection given contact in household
-	float beta_COM <- 0.010;			// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.024;			// Probability of infection given contact in household
+	float beta_COM <- 0.008;			// Probability of infection given contact in workplace/community
 	
 	// Probability that infection will result in hospitalization, by age (in years)
 	list<float>hosp_prob <- [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 

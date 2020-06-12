@@ -18,10 +18,11 @@ import "../models/00_Base_Model.gaml"
 global {
 	int max_days <- 366;
 
-	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 	
-	float beta_HH  <- 0.027;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.008;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -34,8 +35,8 @@ global {
 	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
 
 	list<int>   change_days <- [34, 41, 45, 57, 143];				// Simulation days when work interventions change	
-	list<float> work_close_pcts <- [0.3555, 0.5625, 0.603, 0.81, 0.395];	// Percent reductions in work contacts at different periods
-	list<float> comm_close_pcts <- [0.3555, 0.5625, 0.603, 0.81, 0.0];		// Percent reductions in community contacts at different periods
+	list<float> work_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.336];	// Percent reductions in work contacts at different periods
+	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];		// Percent reductions in community contacts at different periods
 	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0, 0.99];		// Percent reductions in NH/GQ visits 
 
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
@@ -616,8 +617,8 @@ experiment end_all_interventions type: batch repeat: 1 until: (day >= max_days) 
 	parameter "Starting infectious" var: nb_inf_init init: 2;
 
 	// Paramaters for work/community closures
-	list<float> wcp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
-	list<float> ccp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
+	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.0];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.0];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
@@ -643,8 +644,8 @@ experiment Voluntary_WFH type: batch repeat: 1 until: (day >= max_days) parallel
 	parameter "Starting infectious" var: nb_inf_init init: 2;
 
 	// Paramaters for work/community closures
-	list<float> wcp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.395];
-	list<float> ccp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
+	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.0];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
@@ -662,16 +663,55 @@ experiment Voluntary_WFH type: batch repeat: 1 until: (day >= max_days) parallel
 	}
 }
 
-/* Experiment for both voluntary work-from-home and keeping schools closed */
-experiment WFH_Plus_Schools_Close type: batch repeat: 1 until: (day >= max_days) parallel: true {
-		float seedValue <- rnd(1.0, 10000.0);
+/* Experiment for both voluntary work-from-home and cocooning seniors */
+experiment WFH_Plus_Cocoon type: batch repeat: 1 until: (day >= max_days) parallel: true {
+	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 
 	parameter "Starting infectious" var: nb_inf_init init: 2;
 	
-	// Paramaters for work/community closuresa
-	list<float> wcp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.395];
-	list<float> ccp_top <- [0.3555, 0.5625, 0.603, 0.81, 0.0];
+	// Paramaters for work/community closures
+	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.0];
+	
+	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
+	parameter "Community closure" var: comm_close_pcts init: ccp_top;
+	parameter "Use cocoon" var: use_senior_cocoon init: true;
+	
+	init{
+		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+	}
+	
+}
+
+
+/* Experiment for both voluntary work-from-home and keeping schools closed */
+experiment WFH_Plus_Schools_Close type: batch repeat: 1 until: (day >= max_days) parallel: true {
+	float seedValue <- rnd(1.0, 10000.0);
+	float seed <- seedValue;
+
+	parameter "Starting infectious" var: nb_inf_init init: 2;
+	
+	// Paramaters for work/community closures
+	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.0];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;

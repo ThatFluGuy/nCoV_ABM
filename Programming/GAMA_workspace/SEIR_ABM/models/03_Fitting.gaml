@@ -40,8 +40,8 @@ global {
 	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
 
 	list<int>   change_days <- [34, 41, 45, 57];					// Simulation days when work interventions change	
-	list<float> work_close_pcts <- [0.3555, 0.5625, 0.603, 0.81];	// Percent reductions in work contacts at different periods
-	list<float> comm_close_pcts <- [0.3555, 0.5625, 0.603, 0.81];	// Percent reductions in community contacts at different periods
+	list<float> work_close_pcts <- [0.395, 0.625, 0.67, 0.9];	// Percent reductions in work contacts at different periods
+	list<float> comm_close_pcts <- [0.395, 0.625, 0.67, 0.9];	// Percent reductions in community contacts at different periods
 	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0];		// Percent reductions in NH/GQ visits 
 
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
@@ -174,7 +174,7 @@ global {
 			comm_open_pct <- 1-(comm_close_pcts[2]*scale);
 			work_open_pct <- 1-(work_close_pcts[2]*scale);
 			prob_nhgq_visit <- 1-nhgq_close_pcts[2];
-		} else if day < change_days[4]{
+		} else {
 			comm_open_pct <- 1-(comm_close_pcts[3]*scale);
 			work_open_pct <- 1-(work_close_pcts[3]*scale);
 			prob_nhgq_visit <- 1-nhgq_close_pcts[3];
@@ -346,7 +346,7 @@ species GQresident parent: GQresident_Master {
 }
 
 /* Parameter optimization */
-experiment Tabu_Search type: batch repeat: 3 until: (day >= max_days) parallel: true {
+experiment Tabu_Search type: batch repeat: 3 keep_seed: true until: (day >= max_days) parallel: true {
 	parameter "HH beta" var: beta_HH min: 0.019 max: 0.028 step: 0.001;
 	parameter "COM beta" var: beta_COM min: 0.006 max: 0.015 step: 0.001; 
 	parameter "Scale" var: scale min: 0.85 max: 1.0 step: 0.01;
