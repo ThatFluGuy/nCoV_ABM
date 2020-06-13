@@ -22,9 +22,10 @@ global {
 	int max_days <- 150;
 
 	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	//string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 	
-	float beta_HH  <- 0.027;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.008;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -36,6 +37,7 @@ global {
 	// Percent decline variables update in the UpdateDay reflex
 	int trace_start_day <- 41; 				// Start contact tracing on day 41 of the simulation (March 12)
 	float detect_prob <- 0.5;				// Probability that symptomatic person is detected by testing
+	float quarantine_prob <- 1.0;			// Probablity that a house goes into quarantine when it should
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		
@@ -156,8 +158,10 @@ species Toddler parent: Toddler_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 	
@@ -192,6 +196,8 @@ species Toddler parent: Toddler_Master {
 			} else if daypart = "evening" {
 				do move_evening;
 			}
+		} else {
+			self.location <- (Home at indexHome).location;
 		}
 	}
 }
@@ -222,8 +228,10 @@ species Child parent: Child_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 	
@@ -258,6 +266,8 @@ species Child parent: Child_Master {
 			} else if daypart = "evening" {
 				do move_evening;
 			}
+		} else {
+			self.location <- (Home at indexHome).location;
 		}
 	}
 }
@@ -288,8 +298,10 @@ species Adult parent: Adult_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 	
@@ -324,6 +336,8 @@ species Adult parent: Adult_Master {
 			} else if daypart = "evening" {
 				do move_evening;
 			}
+		} else {
+			self.location <- (Home at indexHome).location;
 		}
 	}
 }
@@ -354,8 +368,10 @@ species Senior parent: Senior_Master {
 	// Trigger detected status and quarantine of household members
 	action make_quarantine {
 		ask (QuarantineFlag at self.indexHome) {
-			self.under_quarantine <- true;
-			self.quarantine_counter <- 14;
+			if flip(quarantine_prob){
+				self.under_quarantine <- true;
+				self.quarantine_counter <- 14;
+			}
 		} 
 	}
 	
@@ -390,6 +406,8 @@ species Senior parent: Senior_Master {
 			} else if daypart = "evening" {
 				do move_evening;
 			}
+		} else {
+			self.location <- (Home at indexHome).location;
 		}
 	}
 }
