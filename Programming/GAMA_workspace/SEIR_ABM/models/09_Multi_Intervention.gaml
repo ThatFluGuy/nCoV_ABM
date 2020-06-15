@@ -47,7 +47,7 @@ global {
 	bool use_test_trace <- false;
 	int trace_start_day <- 143;
 	float detect_prob <- 0.5;
-	float quarantine_prob <- 0.7;
+	float quarantine_prob <- 0.75;
 	
 	// Senior shelter-in-place variable
 	bool use_senior_cocoon <- false;
@@ -804,7 +804,7 @@ experiment WFH_Cocoon_SD3 type: batch repeat: 1 until: (day >= max_days) paralle
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.333];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.100];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
@@ -834,7 +834,7 @@ experiment WFH_Cocoon_SD3 type: batch repeat: 1 until: (day >= max_days) paralle
 
 
 /* Experiment to try voluntary working from home, cocooning seniors, "social distance 1/3", and test-and-quarantine */
-experiment WFH_Cocoon_SD3_TestQ type: batch repeat: 1 until: (day >= max_days) parallel: true {
+experiment WFH_Cocoon_SD1_TestQ type: batch repeat: 1 until: (day >= max_days) parallel: true {
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 
@@ -842,7 +842,7 @@ experiment WFH_Cocoon_SD3_TestQ type: batch repeat: 1 until: (day >= max_days) p
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.333];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.1];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
