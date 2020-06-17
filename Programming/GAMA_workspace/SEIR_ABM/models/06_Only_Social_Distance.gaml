@@ -34,7 +34,7 @@ global {
 	float comm_open_pct <- 1.0;				// Percent community site visits occurring during specified time period
 	float work_open_pct <- 1.0;				// Percent of work occuring during specified time period
 	int close_day <- 41;					// Simulation day when interventions change	
-	float close_pcts <- 0.603;				// Percent reductions in contacts
+	float close_pcts <- 0.336;				// Percent reductions in contacts
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		
