@@ -42,8 +42,8 @@ global {
 	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];		// Percent reductions in community contacts at different periods
 	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0, 0.99];		// Percent reductions in NH/GQ visits 
 
-	list<int> school_close_days <- [41, 275]; 			// Close schools on day 41 of the simulation (March 12)
-	list<int> school_open_days <- [221, 289];			// Simulation day when schools open
+	list<int> school_close_days <- [41, 275, 322]; 			// Close schools on day 41 of the simulation (March 12)
+	list<int> school_open_days <- [221, 289, 336];			// Simulation day when schools open
 	bool school_open <- true;							// Flag for whether school is open
 
 	// Test-and-quarantine variables
@@ -190,6 +190,10 @@ global {
 		} else if day < school_close_days[1]{
 			school_open <- true;
 		} else if day < school_open_days[1]{
+			school_open <- false;
+		} else if day < school_close_days[2]{
+			school_open <- true;
+		} else if day < school_open_days[2] {
 			school_open <- false;
 		} else {
 			school_open <- true;
