@@ -21,8 +21,8 @@ import "../models/00_Base_Model.gaml"
 global {
 	int max_days <- 150;
 
-	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
-	//string dir <- "C:/Users/O992928/Desktop/GAMAout/";
+	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 	
 	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
 	float beta_COM <- 0.008;				// Probability of infection given contact in workplace/community
@@ -37,7 +37,7 @@ global {
 	// Percent decline variables update in the UpdateDay reflex
 	int trace_start_day <- 41; 				// Start contact tracing on day 41 of the simulation (March 12)
 	float detect_prob <- 0.5;				// Probability that symptomatic person is detected by testing
-	float quarantine_prob <- 1.0;			// Probablity that a house goes into quarantine when it should
+	float quarantine_prob <- 0.75;			// Probablity that a house goes into quarantine when it should
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		
