@@ -36,7 +36,7 @@ global {
 	// Set dates of interventions and initialize percent decline variables
 	// Percent decline variables update in the UpdateDay reflex
 	int trace_start_day <- 41; 				// Start contact tracing on day 41 of the simulation (March 12)
-	float detect_prob <- 0.5;				// Probability that symptomatic person is detected by testing
+	float detect_prob <- 0.2;				// Probability that symptomatic person is detected by testing
 	float quarantine_prob <- 0.75;			// Probablity that a house goes into quarantine when it should
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
@@ -151,7 +151,7 @@ species Toddler parent: Toddler_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 3;
 		}
 	}
 	
@@ -221,7 +221,7 @@ species Child parent: Child_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 3;
 		}
 	}
 	
@@ -291,7 +291,7 @@ species Adult parent: Adult_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 3;
 		}
 	}
 	
@@ -361,7 +361,7 @@ species Senior parent: Senior_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 3;
 		}
 	}
 	
