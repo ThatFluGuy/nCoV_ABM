@@ -38,19 +38,20 @@ global {
 	list<float> work_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.336];	// Percent reductions in work contacts at different periods
 	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];		// Percent reductions in community contacts at different periods
 
-	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
-	int school_open_day <- 221;						// Simulation day when schools open
-	bool school_open <- true;						// Flag for whether school is open
+	// Closing schools. Always close on day 41 and open on 221 and for Christmas holiday (322-336), other optional 
+	list<int> school_close_days <- [41, 322, max_days]; 		// Close schools on day 41 of the simulation (March 12)
+	list<int> school_open_days <- [221, 336, max_days+1];		// Simulation day when schools open
+	bool school_open <- true;									// Flag for whether school is open
 
 	// Test-and-quarantine variables
 	bool use_test_trace <- false;
-	int trace_start_day <- 143;
-	float detect_prob <- 0.5;
+	int trace_start_day <- (use_test_trace? 143:max_days);
+	float detect_prob <- 0.2;
 	float quarantine_prob <- 0.75;
 	
 	// Senior shelter-in-place variable
 	bool use_senior_cocoon <- false;
-	int cocoon_start_day <- 143;
+	int cocoon_start_day <- (use_senior_cocoon? 143:max_days);
 	float cocoon_prob <- 0.9;
 	float prob_senior_travel <- 1.0;
 	
@@ -174,9 +175,17 @@ global {
 		}
 		
 		// Flag for whether school is in session
-		if day < school_close_day {
+		if day < school_close_days[0] {
 			school_open <- true;
-		} else if day < school_open_day {
+		} else if day < school_open_days[0] {
+			school_open <- false;
+		} else if day < school_close_days[1]{
+			school_open <- true;
+		} else if day < school_open_days[1]{
+			school_open <- false;
+		} else if day < school_close_days[2]{
+			school_open <- true;
+		} else if day < school_open_days[2] {
 			school_open <- false;
 		} else {
 			school_open <- true;
@@ -748,47 +757,6 @@ experiment WFH_Plus_Cocoon type: batch repeat: 1 until: (day >= max_days) parall
 			comm_close_pcts::ccp_top, use_senior_cocoon::true];
 	}
 	
-}
-
-/* Experiment for both voluntary work-from-home and keeping schools closed */
-experiment WFH_Plus_Schools_Close type: batch repeat: 1 until: (day >= max_days) parallel: true {
-	float seedValue <- rnd(1.0, 10000.0);
-	float seed <- seedValue;
-
-	parameter "Starting infectious" var: nb_inf_init init: 2;
-	
-	// Paramaters for work/community closures
-	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.0];
-	
-	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
-	parameter "Community closure" var: comm_close_pcts init: ccp_top;
-
-	// Parameters for schools
-	int sod_top <- 366;
-	
-	parameter "School open day" var: school_open_day init: sod_top;	
-
-	init{
-		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0,
-			work_close_pcts::wcp_top, comm_close_pcts::ccp_top, school_open_day::sod_top];
-	}
 }
 
 /* Experiment to try voluntary working from home, cocooning seniors, and test-and-quarantine */
