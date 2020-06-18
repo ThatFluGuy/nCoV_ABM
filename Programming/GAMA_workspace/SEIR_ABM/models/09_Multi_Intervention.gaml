@@ -37,7 +37,6 @@ global {
 	list<int>   change_days <- [34, 41, 45, 57, 143];				// Simulation days when work interventions change	
 	list<float> work_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.336];	// Percent reductions in work contacts at different periods
 	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];		// Percent reductions in community contacts at different periods
-	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0, 0.99];		// Percent reductions in NH/GQ visits 
 
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
 	int school_open_day <- 221;						// Simulation day when schools open
@@ -160,23 +159,18 @@ global {
 		} else if day < change_days[1] {
 			comm_open_pct <- 1-comm_close_pcts[0];
 			work_open_pct <- 1-work_close_pcts[0];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[0];
 		} else if day < change_days[2] {
 			comm_open_pct <- 1-comm_close_pcts[1];
 			work_open_pct <- 1-work_close_pcts[1];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[1];
 		} else if day < change_days[3] {
 			comm_open_pct <- 1-comm_close_pcts[2];
 			work_open_pct <- 1-work_close_pcts[2];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[2];
 		} else if day < change_days[4]{
 			comm_open_pct <- 1-comm_close_pcts[3];
 			work_open_pct <- 1-work_close_pcts[3];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[3];
 		} else {
 			comm_open_pct <- 1-comm_close_pcts[4];
 			work_open_pct <- 1-work_close_pcts[4];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[4];
 		}
 		
 		// Flag for whether school is in session
@@ -241,7 +235,7 @@ species Toddler parent: Toddler_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit) and (day < cocoon_start_day or self.sym = false)  {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
@@ -344,7 +338,7 @@ species Child parent: Child_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit) and (day < cocoon_start_day or self.sym = false) {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
@@ -462,7 +456,7 @@ species Adult parent: Adult_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit) and (day < cocoon_start_day or self.sym = false) {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
@@ -553,7 +547,7 @@ species Senior parent: Senior_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit * prob_senior_travel) {
+		} else if flip(prob_nhgq_visit * prob_senior_travel) and (day < cocoon_start_day or self.sym = false) {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit * prob_senior_travel) {
 			self.location <- one_of(GQ).location;
@@ -796,7 +790,7 @@ experiment WFH_Cocoon_TestQ type: batch repeat: 1 until: (day >= max_days) paral
 }
 
 /* Experiment to try voluntary working from home, cocooning seniors, and "social distance 1/3" */
-experiment WFH_Cocoon_SD3 type: batch repeat: 1 until: (day >= max_days) parallel: true {
+experiment WFH_Cocoon_SD2 type: batch repeat: 1 until: (day >= max_days) parallel: true {
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 
@@ -804,7 +798,7 @@ experiment WFH_Cocoon_SD3 type: batch repeat: 1 until: (day >= max_days) paralle
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.100];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.200];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;

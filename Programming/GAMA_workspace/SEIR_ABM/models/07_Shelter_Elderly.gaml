@@ -135,10 +135,8 @@ global {
 		
 		if day < close_day {
 			prob_senior_travel <- 1.0;
-			prob_nhgq_visit <- 0.001;
 		} else {
 			prob_senior_travel <- 0.9;
-			prob_nhgq_visit <- 0.0;
 		}
 	}
 }
@@ -152,7 +150,7 @@ species Toddler parent: Toddler_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit) and (day < close_day or self.sym = false) {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
@@ -177,7 +175,7 @@ species Child parent: Child_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit) and (day < close_day or self.sym = false)  {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
@@ -200,44 +198,6 @@ species Adult parent: Adult_Master {
 	int ageyrs <- rnd(18, 74);
 	
 	/********* Adult-specific movement processes ***********/
-	action move_morning {
-		if outside_sim = true {
-			self.location <- point(-1, -1, 0);
-			outside_sim <- false;
-		} else if weekday in ["Mo", "Tu", "We", "Th", "Fr"]{
-			if self.ageyrs <= 65 { // Non-elderly not affected by cocooning
-				if indexWorkplace >= 0 {
-					self.location <- (Workplace at indexWorkplace).location;
-				} else if indexSchool >= 0 { 
-					self.location <- (School at indexSchool).location; 	// Teachers work at school
-				} else if indexNH >= 0 {
-					self.location <- (NH at indexNH).location;			// NH workers
-				} else if indexGQ >= 0 {
-					self.location <- (GQ at indexGQ).location;			// GQ workers
-				} else {
-					self.location <- (Home at indexHome).location;
-				}
-			} else if flip(prob_senior_travel){ // Elderly affected by cocooning
-				if indexWorkplace >= 0 {
-					self.location <- (Workplace at indexWorkplace).location;
-				} else if indexSchool >= 0 { 
-					self.location <- (School at indexSchool).location; 	// Teachers work at school
-				} else if indexNH >= 0 {
-					self.location <- (NH at indexNH).location;			// NH workers
-				} else if indexGQ >= 0 {
-					self.location <- (GQ at indexGQ).location;			// GQ workers
-				} else {
-					self.location <- (Home at indexHome).location;
-				}				
-			} else {
-				self.location <- (Home at indexHome).location;
-			}
-		} else {
-			self.location <- (Home at indexHome).location;
-		}
-	}
-	
-	
 	action move_morning {
 		float my_travel_prob <- (self.ageyrs < 65? 1.0:prob_senior_travel);
 		if outside_sim = true {
@@ -269,7 +229,7 @@ species Adult parent: Adult_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit) and (day < close_day or self.sym = false)  {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
@@ -292,7 +252,7 @@ species Senior parent: Senior_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit) and (day < close_day or self.sym = false)  {
 			self.location <- one_of(NH).location;
 		} else if flip(prob_nhgq_visit) {
 			self.location <- one_of(GQ).location;
