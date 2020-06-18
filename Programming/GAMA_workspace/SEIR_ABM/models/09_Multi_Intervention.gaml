@@ -672,6 +672,46 @@ experiment Voluntary_WFH type: batch repeat: 1 until: (day >= max_days) parallel
 	}
 }
 
+
+/* Experiment to try voluntary working from home and 20% social distancing */
+experiment WFH_SD2 type: batch repeat: 1 until: (day >= max_days) parallel: true {
+	float seedValue <- rnd(1.0, 10000.0);
+	float seed <- seedValue;
+
+	parameter "Starting infectious" var: nb_inf_init init: 2;
+	
+	// Paramaters for work/community closures
+	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.200];
+	
+	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
+	parameter "Community closure" var: comm_close_pcts init: ccp_top;
+	parameter "Use cocoon" var: use_senior_cocoon init: true;
+	
+	init{
+		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0, work_close_pcts::wcp_top, 
+			comm_close_pcts::ccp_top, use_senior_cocoon::true];
+	}
+}
+
+
+
 /* Experiment for both voluntary work-from-home and cocooning seniors */
 experiment WFH_Plus_Cocoon type: batch repeat: 1 until: (day >= max_days) parallel: true {
 	float seedValue <- rnd(1.0, 10000.0);
