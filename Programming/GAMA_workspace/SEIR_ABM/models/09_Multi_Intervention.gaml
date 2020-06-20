@@ -47,7 +47,7 @@ global {
 	bool use_test_trace <- false;
 	int trace_start_day <- (use_test_trace? 143:max_days);
 	float detect_prob <- 0.2;
-	float quarantine_prob <- 0.75;
+	float quarantine_prob <- 0.33;
 	
 	// Senior shelter-in-place variable
 	bool use_senior_cocoon <- false;
@@ -227,7 +227,7 @@ species Toddler parent: Toddler_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 4;
 		}
 	}
 	
@@ -320,7 +320,7 @@ species Child parent: Child_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 4;
 		}
 	}
 	
@@ -425,7 +425,7 @@ species Adult parent: Adult_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 4;
 		}
 	}
 	
@@ -545,7 +545,7 @@ species Senior parent: Senior_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 2;
+			detect_counter <- 4;
 		}
 	}
 	
@@ -806,9 +806,8 @@ experiment WFH_SD2_Cocoon_SymIso type: batch repeat: 1 until: (day >= max_days) 
 	}
 }
 
-
-/* Experiment to try voluntary working from home, cocooning seniors, and test-and-quarantine */
-experiment WFH_Cocoon_TestQ type: batch repeat: 1 until: (day >= max_days) parallel: true {
+/* Experiment to try voluntary working from home, cocooning seniors, social distance 20%, symptom iso, test+quarantine */
+experiment WFH_SD2_Cocoon_SymIso_testQ type: batch repeat: 1 until: (day >= max_days) parallel: true {
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 
@@ -816,32 +815,33 @@ experiment WFH_Cocoon_TestQ type: batch repeat: 1 until: (day >= max_days) paral
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.0];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.200];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
 	parameter "Use cocoon" var: use_senior_cocoon init: true;
+	parameter "Use symptomatic isolation" var: use_sym_iso init: true;
 	parameter "Use test-and-quarantine" var: use_test_trace init: true;
 	
 	init{
 		create simulation with: [seed::seedValue + 1, model_number::1, nb_inf_init::2, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 2, model_number::2, nb_inf_init::2, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 3, model_number::3, nb_inf_init::0, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 4, model_number::4, nb_inf_init::0, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 5, model_number::5, nb_inf_init::0, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 6, model_number::6, nb_inf_init::0, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 7, model_number::7, nb_inf_init::0, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 8, model_number::8, nb_inf_init::0, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 		create simulation with: [seed::seedValue + 9, model_number::9, nb_inf_init::0, work_close_pcts::wcp_top, 
-			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_test_trace::true];
+			comm_close_pcts::ccp_top, use_senior_cocoon::true, use_sym_iso::true, use_test_trace::true];
 	}
 }
 
