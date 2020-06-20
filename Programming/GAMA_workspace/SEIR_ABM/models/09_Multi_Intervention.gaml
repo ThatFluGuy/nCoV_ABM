@@ -34,9 +34,9 @@ global {
 	float comm_open_pct <- 1.0;						// Percent community site visits occurring during specified time period
 	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
 
-	list<int>   change_days <- [34, 41, 45, 57, 143];				// Simulation days when work interventions change	
-	list<float> work_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.336];	// Percent reductions in work contacts at different periods
-	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];		// Percent reductions in community contacts at different periods
+	list<int>   change_days <- [34, 41, 45, 57, 143];					// Simulation days when work interventions change	
+	list<float> work_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];	// Percent reductions in work contacts at different periods
+	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];	// Percent reductions in community contacts at different periods
 
 	// Closing schools. Always close on day 41 and open on 221 and for Christmas holiday (322-336), other optional 
 	list<int> school_close_days <- [41, 322, max_days]; 		// Close schools on day 41 of the simulation (March 12)
@@ -59,6 +59,8 @@ global {
 	bool use_sym_iso <- false;
 	int sym_iso_day <- (use_sym_iso? 143:max_days);
 	float sym_iso_prob <- 0.2;
+	float prob_sym_travel <- 1.0;
+	
 	
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		
@@ -204,8 +206,16 @@ global {
 				prob_senior_travel <- (1-cocoon_prob);
 			}
 		}
+		
+		// Flag for isolation of symptomatics
+		if use_sym_iso = true {
+			if day < sym_iso_day {
+				prob_sym_travel <- 1.0;
+			} else {
+				prob_sym_travel <- (1-sym_iso_prob);
+			}
+		}
 	}
-	
 }
 
 /* TODDLER, a subset of Host ages 0-5 who is not assigned to a "school" (e.g. daycare, pre-school) */
@@ -286,7 +296,7 @@ species Toddler parent: Toddler_Master {
 		
 		// After updating status, move as appropriate (only if not under quarantine or symptomatic isolation)
 		if (QuarantineFlag at self.indexHome).under_quarantine = false {
-			if self.sym = false or flip(1-sym_iso_prob){
+			if self.sym = false or flip(prob_sym_travel){
 				if daypart = "morning" {
 					do move_morning;
 				} else if daypart = "afternoon" {
@@ -391,7 +401,7 @@ species Child parent: Child_Master {
 		
 		// After updating status, move as appropriate (only if not under quarantine or symptomatic isolation)
 		if (QuarantineFlag at self.indexHome).under_quarantine = false {
-			if self.sym = false or flip(1-sym_iso_prob){
+			if self.sym = false or flip(1-prob_sym_travel){
 				if daypart = "morning" {
 					do move_morning;
 				} else if daypart = "afternoon" {
@@ -474,9 +484,9 @@ species Adult parent: Adult_Master {
 			// If infecting someone in another sub-population, set location outside the grid
 			self.location <- point(-1, -1, 0);
 			outside_sim <- false;
-		} else if flip(prob_nhgq_visit) and (day < cocoon_start_day or self.sym = false) {
+		} else if flip(prob_nhgq_visit * my_travel_prob) and (day < cocoon_start_day or self.sym = false) {
 			self.location <- one_of(NH).location;
-		} else if flip(prob_nhgq_visit) {
+		} else if flip(prob_nhgq_visit * my_travel_prob) {
 			self.location <- one_of(GQ).location;
 		} else if flip(prob_community_wkdy * comm_open_pct * my_travel_prob) and weekday in ["Mo", "Tu", "We", "Th", "Fr"] {
 			self.location <- one_of(Community).location;
@@ -511,7 +521,7 @@ species Adult parent: Adult_Master {
 		
 		// After updating status, move as appropriate (only if not under quarantine or symptomatic isolation)
 		if (QuarantineFlag at self.indexHome).under_quarantine = false {
-			if self.sym = false or flip(1-sym_iso_prob){
+			if self.sym = false or flip(1-prob_sym_travel){
 				if daypart = "morning" {
 					do move_morning;
 				} else if daypart = "afternoon" {
@@ -604,7 +614,7 @@ species Senior parent: Senior_Master {
 		
 		// After updating status, move as appropriate (only if not under quarantine or symptomatic isolation)
 		if (QuarantineFlag at self.indexHome).under_quarantine = false {
-			if self.sym = false or flip(1-sym_iso_prob){
+			if self.sym = false or flip(1-prob_sym_travel){
 				if daypart = "morning" {
 					do move_morning;
 				} else if daypart = "afternoon" {
