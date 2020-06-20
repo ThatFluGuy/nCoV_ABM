@@ -39,8 +39,8 @@ global {
 	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];	// Percent reductions in community contacts at different periods
 
 	// Closing schools. Always close on day 41 and open on 221 and for Christmas holiday (322-336), other optional 
-	list<int> school_close_days <- [41, 322, max_days]; 		// Close schools on day 41 of the simulation (March 12)
-	list<int> school_open_days <- [221, 336, max_days+1];		// Simulation day when schools open
+	list<int> school_close_days <- [41, 244, 275, 305]; 		// Close schools on day 41 of the simulation (March 12)
+	list<int> school_open_days <- [221, 251, 281, 312];		// Simulation day when schools open
 	bool school_open <- true;									// Flag for whether school is open
 
 	// Test-and-quarantine variables
@@ -58,7 +58,7 @@ global {
 	// Symptomatics stay home
 	bool use_sym_iso <- false;
 	int sym_iso_day <- (use_sym_iso? 143:max_days);
-	float sym_iso_prob <- 0.2;
+	float sym_iso_prob <- 0.28169;
 	float prob_sym_travel <- 1.0;
 	
 	
@@ -194,7 +194,11 @@ global {
 			school_open <- true;
 		} else if day < school_open_days[2] {
 			school_open <- false;
-		} else {
+		} else if day < school_close_days[3]{
+			school_open <- true;
+		} else if day < school_open_days[3]{
+			school_open <- false;
+		} else{
 			school_open <- true;
 		}
 		
@@ -237,7 +241,7 @@ species Toddler parent: Toddler_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 4;
+			detect_counter <- 3;
 		}
 	}
 	
@@ -330,7 +334,7 @@ species Child parent: Child_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 4;
+			detect_counter <- 3;
 		}
 	}
 	
@@ -401,7 +405,7 @@ species Child parent: Child_Master {
 		
 		// After updating status, move as appropriate (only if not under quarantine or symptomatic isolation)
 		if (QuarantineFlag at self.indexHome).under_quarantine = false {
-			if self.sym = false or flip(1-prob_sym_travel){
+			if self.sym = false or flip(prob_sym_travel){
 				if daypart = "morning" {
 					do move_morning;
 				} else if daypart = "afternoon" {
@@ -435,7 +439,7 @@ species Adult parent: Adult_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 4;
+			detect_counter <- 3;
 		}
 	}
 	
@@ -521,7 +525,7 @@ species Adult parent: Adult_Master {
 		
 		// After updating status, move as appropriate (only if not under quarantine or symptomatic isolation)
 		if (QuarantineFlag at self.indexHome).under_quarantine = false {
-			if self.sym = false or flip(1-prob_sym_travel){
+			if self.sym = false or flip(prob_sym_travel){
 				if daypart = "morning" {
 					do move_morning;
 				} else if daypart = "afternoon" {
@@ -555,7 +559,7 @@ species Senior parent: Senior_Master {
 	action make_symptomatic {
 		sym <- true;
 		if flip(detect_prob) and day >= trace_start_day {
-			detect_counter <- 4;
+			detect_counter <- 3;
 		}
 	}
 	
@@ -614,7 +618,7 @@ species Senior parent: Senior_Master {
 		
 		// After updating status, move as appropriate (only if not under quarantine or symptomatic isolation)
 		if (QuarantineFlag at self.indexHome).under_quarantine = false {
-			if self.sym = false or flip(1-prob_sym_travel){
+			if self.sym = false or flip(prob_sym_travel){
 				if daypart = "morning" {
 					do move_morning;
 				} else if daypart = "afternoon" {
@@ -825,7 +829,7 @@ experiment WFH_SD2_Cocoon_SymIso_testQ type: batch repeat: 1 until: (day >= max_
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.200];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.250];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
