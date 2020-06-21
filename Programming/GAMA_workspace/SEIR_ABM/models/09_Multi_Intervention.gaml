@@ -39,8 +39,8 @@ global {
 	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765, 0.0];	// Percent reductions in community contacts at different periods
 
 	// Closing schools. Always close on day 41 and open on 221 and for Christmas holiday (322-336), other optional 
-	list<int> school_close_days <- [41, 244, 275, 305]; 		// Close schools on day 41 of the simulation (March 12)
-	list<int> school_open_days <- [221, 251, 281, 312];		// Simulation day when schools open
+	list<int> school_close_days <- [41, max_days+1, max_days+3, max_days+5]; 		// Close schools on day 41 of the simulation (March 12)
+	list<int> school_open_days <- [221, max_days+2, max_days+4, max_days+6];		// Simulation day when schools open
 	bool school_open <- true;									// Flag for whether school is open
 
 	// Test-and-quarantine variables
@@ -58,7 +58,7 @@ global {
 	// Symptomatics stay home
 	bool use_sym_iso <- false;
 	int sym_iso_day <- (use_sym_iso? 143:max_days);
-	float sym_iso_prob <- 0.28169;
+	float sym_iso_prob <- 0.33;
 	float prob_sym_travel <- 1.0;
 	
 	
@@ -718,7 +718,7 @@ experiment WFH_SD2 type: batch repeat: 1 until: (day >= max_days) parallel: true
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.200];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.250];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
@@ -754,7 +754,7 @@ experiment WFH_SD2_Cocoon type: batch repeat: 1 until: (day >= max_days) paralle
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.200];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.250];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
@@ -791,7 +791,7 @@ experiment WFH_SD2_Cocoon_SymIso type: batch repeat: 1 until: (day >= max_days) 
 	
 	// Paramaters for work/community closures
 	list<float> wcp_top <- [0.336, 0.531, 0.570, 0.765, 0.336];
-	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.200];
+	list<float> ccp_top <- [0.336, 0.531, 0.570, 0.765, 0.250];
 	
 	parameter "Workplace closure" var: work_close_pcts init: wcp_top;
 	parameter "Community closure" var: comm_close_pcts init: ccp_top;
