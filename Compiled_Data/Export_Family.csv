@@ -1,0 +1,13 @@
+AdultType,AnyChild,ChildType,Value
+Married,FALSE,none,236847
+Married,TRUE,lt6_only,51233
+Married,TRUE,lt_ge_6,37591
+Married,TRUE,ge6_only,99570
+MaleOnly,FALSE,none,16680
+MaleOnly,TRUE,lt6_only,4788
+MaleOnly,TRUE,lt_ge_6,2800
+MaleOnly,TRUE,ge6_only,12165
+FemaleOnly,FALSE,none,31128
+FemaleOnly,TRUE,lt6_only,6491
+FemaleOnly,TRUE,lt_ge_6,9000
+FemaleOnly,TRUE,ge6_only,27851
