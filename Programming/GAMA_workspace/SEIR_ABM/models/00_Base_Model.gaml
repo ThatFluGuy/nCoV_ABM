@@ -104,7 +104,7 @@ global {
 		
 	// Day and time variables	
 	string daypart <- "evening";
-	string weekday <- "Su";
+	string weekday <- "Sa";
 	int day <- 0;
 	
 	// Initialize model

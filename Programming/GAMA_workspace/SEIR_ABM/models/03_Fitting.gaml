@@ -20,7 +20,7 @@ import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
 global {
-	int max_days <- 117;
+	int max_days <- 205;
 
 	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
 	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
@@ -39,25 +39,42 @@ global {
 	float comm_open_pct <- 1.0;						// Percent community site visits occurring during specified time period
 	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
 
-	list<int>   change_days <- [34, 41, 45, 57];					// Simulation days when work interventions change	
-	list<float> work_close_pcts <- [0.395, 0.625, 0.67, 0.9];	// Percent reductions in work contacts at different periods
-	list<float> comm_close_pcts <- [0.395, 0.625, 0.67, 0.9];	// Percent reductions in community contacts at different periods
-	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0];		// Percent reductions in NH/GQ visits 
+	int monday_counter <- 0; 			// Counter for weekly updates to contacts
 
+	// Weekly percent reductions in workplace contacts
+	list<float> work_close_pcts <- [0.0, 0.0, 0.0, 0.0, 10.2, 29.6, 51.8, 64.2, 69.6, 69.8, 67.8, 66.8, 65.4, 63.2, 61.8,
+			60.6, 63, 58, 57, 56.4, 56.6, 58.8, 56.6, 56.2, 56.2, 56.4, 56.6, 56.8, 56.6, 56.2, 56.6, 56.6];
+	
+	// Weekly percent reductions in community contacts
+	list<float> comm_close_pcts <- [0.0, 0.0, 0.0, 0.0, 5.0, 12.14, 29.43, 39.86, 40.57, 39.93, 38.86, 39.0, 36.0, 33.0, 
+		34.36, 32.43, 33.0, 30.21, 27.93, 24.07, 23.43, 23.07, 22.0, 20.64, 20.57, 20.0, 20.36, 20.29, 20.29, 19.14, 19.14];
+	
+	// Weekly probability of visiting a NH or GQ
+	list<float> nhgq_visit_pcts <- [0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+		
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
 	bool school_open <- true;						// Flag for whether school is open
 
 	// Track cumulative hospitalizations and optimize
 	list<int> n_cumul_hosp <- list_with(max_days+1, 0);
 	float sum_sq_err <- 0.0;
-	float scale <- 1.0; // Scale the close percents list
+	//float scale <- 1.0; // Scale the close percents list
 	
-	list<float> obs_hosp_list <- [1.41, 1.57, 1.66, 1.75, 2.04, 2.29, 2.53, 3.03, 3.32, 3.57, 3.88, 4.22, 4.69, 5.02, 5.54, 5.87, 
-			6.23, 6.52, 7.04, 7.44, 7.78, 8.34, 8.86, 9.37, 9.84, 10.78, 11.35, 12.06, 12.69, 13.43, 14.35, 15.2, 16.03, 16.93, 17.8, 
-			18.68, 19.66, 20.22, 20.96, 21.48, 22.15, 22.65, 23.27, 23.88, 24.48, 24.87, 25.2, 25.58, 26.1, 26.64, 27.15, 27.6, 28.05, 
-			28.48, 28.9, 29.35, 29.66, 29.98, 30.36, 30.67, 30.85, 31.21, 31.52, 31.7, 31.93, 32.26, 32.4, 32.67, 32.94, 33.18, 33.34, 
-			33.54, 33.72, 33.99, 34.26, 34.42, 34.6, 34.78, 34.89, 35, 35.07, 35.29, 35.47, 35.67, 35.76, 36.03, 36.17, 36.3, 36.43, 
-			36.5, 36.61];
+	list<float> obs_hosp_list <- [0.68, 0.68, 0.68, 0.68, 0.68, 0.68, 0.68, 1.14, 1.14, 1.14, 1.82, 2.05, 2.05, 2.05, 2.51, 2.51, 
+		2.74, 2.96, 3.87, 4.56, 5.47, 6.15, 6.61, 7.98, 8.21, 8.43, 10.94, 12.76, 13.90, 14.59, 17.78, 20.29, 22.34, 27.58, 31.00, 
+		33.73, 36.92, 40.80, 45.81, 49.46, 55.39, 58.58, 62.22, 65.42, 70.66, 74.99, 78.64, 84.56, 89.58, 95.05, 99.83, 109.63, 
+		115.33, 123.08, 129.46, 137.44, 146.79, 155.45, 164.11, 173.00, 182.34, 191.23, 201.72, 207.41, 214.94, 220.86, 228.84, 
+		234.31, 241.38, 248.21, 253.23, 257.10, 261.21, 264.85, 270.09, 276.02, 281.49, 286.05, 291.06, 294.71, 299.04, 302.46, 
+		306.56, 309.75, 313.40, 315.68, 317.28, 321.15, 324.11, 325.71, 327.08, 330.04, 331.41, 334.83, 336.88, 338.70, 340.52, 
+		342.58, 344.40, 347.36, 349.41, 351.46, 353.52, 356.02, 357.16, 357.62, 358.53, 360.13, 362.41, 364.00, 365.14, 366.96, 
+		368.33, 370.15, 371.52, 371.98, 372.89, 373.57, 375.17, 375.85, 377.22, 378.59, 378.82, 379.96, 380.87, 382.69, 383.37, 
+		384.29, 385.65, 386.11, 387.71, 387.93, 387.93, 388.16, 388.62, 390.44, 391.35, 392.26, 393.40, 394.54, 395.45, 397.05, 
+		398.19, 399.56, 400.93, 403.20, 404.12, 406.17, 408.90, 410.04, 410.95, 411.64, 412.78, 414.37, 415.28, 416.42, 417.56, 
+		419.84, 422.12, 424.63, 426.23, 428.05, 429.19, 430.78, 433.97, 435.11, 435.80, 437.62, 438.99, 441.04, 443.09, 444.92, 
+		446.51, 447.65, 449.70, 450.84, 453.12, 455.17, 457.22, 460.87, 463.15, 465.66, 467.48, 468.39, 469.99, 472.95, 474.32, 
+		476.14, 477.51, 479.33, 480.93, 482.98, 484.35, 485.94, 488.45, 490.96, 492.78, 493.92, 495.06, 497.34, 500.07, 501.90, 
+		503.49, 504.40, 505.77, 507.82, 507.82, 507.82, 508.05, 508.05, 508.05, 508.05];
 
 	// Initialize model, specify the number of infectious and susceptible hosts
 	init {		
@@ -132,9 +149,7 @@ global {
 				n_cumul_hosp[day] <- n_hosp_list[day] + n_cumul_hosp[day-1];
 			}
 			
-			if day >= 26 {
-				sum_sq_err <- sum_sq_err + (n_cumul_hosp[day] - obs_hosp_list[day-26])^2;
-			}
+			sum_sq_err <- sum_sq_err + (n_cumul_hosp[day] - obs_hosp_list[day])^2;
 		}
 	}
 
@@ -145,6 +160,11 @@ global {
 		if weekday = "Su"{
 			weekday <- "Mo";
 		} else if weekday = "Mo" {
+			monday_counter <- monday_counter + 1;
+			comm_open_pct <- 1 - comm_close_pcts[monday_counter];
+			work_open_pct <- 1 - work_close_pcts[monday_counter];
+			prob_nhgq_visit <- nhgq_visit_pcts[monday_counter];
+			
 			weekday <- "Tu";
 		} else if weekday = "Tu" {
 			weekday <- "We";
@@ -157,29 +177,7 @@ global {
 		} else if weekday = "Sa" {
 			weekday <- "Su";
 		}
-		
-		// Update work, community, and NH/GQ visit probabilities
-		if day < change_days[0] {
-			comm_open_pct <- 1.0;
-			work_open_pct <- 1.0;
-		} else if day < change_days[1] {
-			comm_open_pct <- 1-(comm_close_pcts[0]*scale);
-			work_open_pct <- 1-(work_close_pcts[0]*scale);
-			prob_nhgq_visit <- 1-nhgq_close_pcts[0];
-		} else if day < change_days[2] {
-			comm_open_pct <- 1-(comm_close_pcts[1]*scale);
-			work_open_pct <- 1-(work_close_pcts[1]*scale);
-			prob_nhgq_visit <- 1-nhgq_close_pcts[1];
-		} else if day < change_days[3] {
-			comm_open_pct <- 1-(comm_close_pcts[2]*scale);
-			work_open_pct <- 1-(work_close_pcts[2]*scale);
-			prob_nhgq_visit <- 1-nhgq_close_pcts[2];
-		} else {
-			comm_open_pct <- 1-(comm_close_pcts[3]*scale);
-			work_open_pct <- 1-(work_close_pcts[3]*scale);
-			prob_nhgq_visit <- 1-nhgq_close_pcts[3];
-		} 
-		
+
 		// Flag for whether school is in session
 		if day < school_close_day {
 			school_open <- true;
@@ -349,7 +347,7 @@ species GQresident parent: GQresident_Master {
 experiment Tabu_Search type: batch repeat: 3 keep_seed: true until: (day >= max_days) parallel: true {
 	parameter "HH beta" var: beta_HH min: 0.019 max: 0.028 step: 0.001;
 	parameter "COM beta" var: beta_COM min: 0.006 max: 0.015 step: 0.001; 
-	parameter "Scale" var: scale min: 0.85 max: 1.0 step: 0.01;
+	//parameter "Scale" var: scale min: 0.85 max: 1.0 step: 0.01;
 	
 	method tabu minimize: sum_sq_err iter_max: 50 tabu_list_size: 5;
 	
