@@ -22,8 +22,8 @@ import "../models/00_Base_Model.gaml"
 global {
 	int max_days <- 205;
 
-	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.016;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.008;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -42,12 +42,14 @@ global {
 	int monday_counter <- 0; 			// Counter for weekly updates to contacts
 
 	// Weekly percent reductions in workplace contacts
-	list<float> work_close_pcts <- [0.0, 0.0, 0.0, 0.0, 10.2, 29.6, 51.8, 64.2, 69.6, 69.8, 67.8, 66.8, 65.4, 63.2, 61.8,
-			60.6, 63, 58, 57, 56.4, 56.6, 58.8, 56.6, 56.2, 56.2, 56.4, 56.6, 56.8, 56.6, 56.2, 56.6, 56.6];
+	list<float> work_close_pcts <- [0.00, 0.00, 0.00, 0.00, 0.10, 0.30, 0.52, 0.64, 0.70, 0.70, 0.68, 0.67, 0.65, 0.63, 
+		0.62, 0.61, 0.63, 0.58, 0.57, 0.56, 0.57, 0.59, 0.57, 0.56, 0.56, 0.56, 0.57, 0.57, 0.57, 0.56, 0.57];
 	
 	// Weekly percent reductions in community contacts
-	list<float> comm_close_pcts <- [0.0, 0.0, 0.0, 0.0, 5.0, 12.14, 29.43, 39.86, 40.57, 39.93, 38.86, 39.0, 36.0, 33.0, 
-		34.36, 32.43, 33.0, 30.21, 27.93, 24.07, 23.43, 23.07, 22.0, 20.64, 20.57, 20.0, 20.36, 20.29, 20.29, 19.14, 19.14];
+	list<float> comm_close_pcts <- [0.00, 0.00, 0.00, 0.00, 0.05, 0.12, 0.29, 0.40, 0.41, 0.40, 0.39, 0.39, 0.36, 0.33, 0.34, 
+		0.32, 0.33, 0.30, 0.28, 0.24, 0.23, 0.23, 0.22, 0.21, 0.21, 0.20, 0.20, 0.20, 0.20, 0.19, 0.19];
+	
+	float scale <- 0.7;
 	
 	// Weekly probability of visiting a NH or GQ
 	list<float> nhgq_visit_pcts <- [0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -132,6 +134,20 @@ global {
 		
 		// Update population count tracking variables
 		if daypart = "evening" {
+			sus_tod_list[day] <- Toddler count (each.sus);
+			sus_chi_list[day] <- Child count (each.sus);
+			sus_adu_list[day] <- Adult count (each.sus);
+			sus_sen_list[day] <- Senior count (each.sus);
+			sus_nh_list[day] <- NHresident count (each.sus);
+			sus_gq_list[day] <- GQresident count (each.sus);
+			
+			exp_tod_list[day] <- Toddler count (each.exp);
+			exp_chi_list[day] <- Child count (each.exp);
+			exp_adu_list[day] <- Adult count (each.exp);
+			exp_sen_list[day] <- Senior count (each.exp);
+			exp_nh_list[day] <- NHresident count (each.exp);
+			exp_gq_list[day] <- GQresident count (each.exp);
+			
 			inf_tod_list[day] <- Toddler count (each.inf);
 			inf_chi_list[day] <- Child count (each.inf);
 			inf_adu_list[day] <- Adult count (each.inf);
@@ -160,9 +176,9 @@ global {
 			weekday <- "Mo";
 		} else if weekday = "Mo" {
 			monday_counter <- monday_counter + 1;
-			comm_open_pct <- 1 - comm_close_pcts[monday_counter];
-			work_open_pct <- 1 - work_close_pcts[monday_counter];
-			prob_nhgq_visit <- nhgq_visit_pcts[monday_counter];
+			comm_open_pct <- 1 - (comm_close_pcts[monday_counter]*scale);
+			work_open_pct <- 1 - (work_close_pcts[monday_counter]*scale);
+			prob_nhgq_visit <- (nhgq_visit_pcts[monday_counter]*scale);
 			
 			weekday <- "Tu";
 		} else if weekday = "Tu" {
@@ -188,6 +204,7 @@ global {
 	// Modify the save function
 	// Exclude "do die;" so that results save for optimization	
 	reflex save_output when: day=max_days{
+		
 		write "ALL DONE, SSE= " + sum_sq_err;						
 	}
 }
@@ -344,9 +361,9 @@ species GQresident parent: GQresident_Master {
 
 /* Parameter optimization */
 experiment Tabu_Search type: batch repeat: 3 keep_seed: true until: (day >= max_days) parallel: true {
-	parameter "HH beta" var: beta_HH min: 0.019 max: 0.028 step: 0.001;
-	parameter "COM beta" var: beta_COM min: 0.006 max: 0.015 step: 0.001; 
-	//parameter "Scale" var: scale min: 0.85 max: 1.0 step: 0.01;
+	parameter "HH beta" var: beta_HH min: 0.020 max: 0.030 step: 0.001;
+	parameter "COM beta" var: beta_COM min: 0.008 max: 0.02 step: 0.001; 
+	parameter "Scale" var: scale min: 0.5 max: 0.8 step: 0.05;
 	
 	method tabu minimize: sum_sq_err iter_max: 50 tabu_list_size: 5;
 	

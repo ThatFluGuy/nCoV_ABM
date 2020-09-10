@@ -26,7 +26,7 @@ global {
 	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 		
 	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.008;				// Probability of infection given contact in workplace/community
+	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -38,11 +38,22 @@ global {
 	float comm_open_pct <- 1.0;						// Percent community site visits occurring during specified time period
 	float work_open_pct <- 1.0;						// Percent of work occuring during specified time period
 
-	list<int>   change_days <- [34, 41, 45, 57];					// Simulation days when work interventions change	
-	list<float> work_close_pcts <- [0.336, 0.531, 0.570, 0.765];	// Percent reductions in work contacts at different periods
-	list<float> comm_close_pcts <- [0.336, 0.531, 0.570, 0.765];	// Percent reductions in community contacts at different periods
-	list<float> nhgq_close_pcts <- [1.0, 1.0, 1.0, 1.0, 1.0];		// Percent reductions in NH/GQ visits 
+	int monday_counter <- 0; 			// Counter for weekly updates to contacts
 
+	// Weekly percent reductions in workplace contacts
+	list<float> work_close_pcts <- [0.00, 0.00, 0.00, 0.00, 0.10, 0.30, 0.52, 0.64, 0.70, 0.70, 0.68, 0.67, 0.65, 0.63, 
+		0.62, 0.61, 0.63, 0.58, 0.57, 0.56, 0.57, 0.59, 0.57, 0.56, 0.56, 0.56, 0.57, 0.57, 0.57, 0.56, 0.57];
+	
+	// Weekly percent reductions in community contacts
+	list<float> comm_close_pcts <- [0.00, 0.00, 0.00, 0.00, 0.05, 0.12, 0.29, 0.40, 0.41, 0.40, 0.39, 0.39, 0.36, 0.33, 0.34, 
+		0.32, 0.33, 0.30, 0.28, 0.24, 0.23, 0.23, 0.22, 0.21, 0.21, 0.20, 0.20, 0.20, 0.20, 0.19, 0.19];
+	
+	float scale <- 0.7;
+	
+	// Weekly probability of visiting a NH or GQ
+	list<float> nhgq_visit_pcts <- [0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+		
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
 	bool school_open <- true;						// Flag for whether school is open
 	
@@ -130,6 +141,11 @@ global {
 		if weekday = "Su"{
 			weekday <- "Mo";
 		} else if weekday = "Mo" {
+			monday_counter <- monday_counter + 1;
+			comm_open_pct <- 1 - (comm_close_pcts[monday_counter]*scale);
+			work_open_pct <- 1 - (work_close_pcts[monday_counter]*scale);
+			prob_nhgq_visit <- (nhgq_visit_pcts[monday_counter]*scale);
+			
 			weekday <- "Tu";
 		} else if weekday = "Tu" {
 			weekday <- "We";
@@ -142,28 +158,6 @@ global {
 		} else if weekday = "Sa" {
 			weekday <- "Su";
 		}
-		
-		// Update work, community, and NH/GQ visit probabilities
-		if day < change_days[0] {
-			comm_open_pct <- 1.0;
-			work_open_pct <- 1.0;
-		} else if day < change_days[1] {
-			comm_open_pct <- 1-comm_close_pcts[0];
-			work_open_pct <- 1-work_close_pcts[0];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[0];
-		} else if day < change_days[2] {
-			comm_open_pct <- 1-comm_close_pcts[1];
-			work_open_pct <- 1-work_close_pcts[1];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[1];
-		} else if day < change_days[3] {
-			comm_open_pct <- 1-comm_close_pcts[2];
-			work_open_pct <- 1-work_close_pcts[2];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[2];
-		} else {
-			comm_open_pct <- 1-comm_close_pcts[3];
-			work_open_pct <- 1-work_close_pcts[3];
-			prob_nhgq_visit <- 1-nhgq_close_pcts[3];
-		} 
 		
 		// Flag for whether school is in session
 		if day < school_close_day {
