@@ -20,13 +20,13 @@ import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
 global {
-	int max_days <- 130;
+	int max_days <- 205;
 
 	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
 	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 		
-	float beta_HH  <- 0.024;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
+	float beta_HH  <- 0.015;			 	// Probability of infection given contact in household
+	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -48,7 +48,8 @@ global {
 	list<float> comm_close_pcts <- [0.00, 0.00, 0.00, 0.00, 0.05, 0.12, 0.29, 0.40, 0.41, 0.40, 0.39, 0.39, 0.36, 0.33, 0.34, 
 		0.32, 0.33, 0.30, 0.28, 0.24, 0.23, 0.23, 0.22, 0.21, 0.21, 0.20, 0.20, 0.20, 0.20, 0.19, 0.19];
 	
-	float scale <- 0.7;
+	// Starting in May, assume modest reduction in beta_COM due to widespread mask use
+	float masks <- 0.9; 	
 	
 	// Weekly probability of visiting a NH or GQ
 	list<float> nhgq_visit_pcts <- [0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -142,9 +143,9 @@ global {
 			weekday <- "Mo";
 		} else if weekday = "Mo" {
 			monday_counter <- monday_counter + 1;
-			comm_open_pct <- 1 - (comm_close_pcts[monday_counter]*scale);
-			work_open_pct <- 1 - (work_close_pcts[monday_counter]*scale);
-			prob_nhgq_visit <- (nhgq_visit_pcts[monday_counter]*scale);
+			comm_open_pct <- 1 - comm_close_pcts[monday_counter];
+			work_open_pct <- 1 - work_close_pcts[monday_counter];
+			prob_nhgq_visit <- nhgq_visit_pcts[monday_counter];
 			
 			weekday <- "Tu";
 		} else if weekday = "Tu" {
@@ -164,6 +165,11 @@ global {
 			school_open <- true;
 		} else  {
 			school_open <- false;
+		} 
+		
+		// Starting in May, reduce beta_COM for mask usage
+		if day = 90 {
+			beta_COM <- beta_COM * masks;
 		} 
 	}
 }
