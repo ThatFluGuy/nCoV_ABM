@@ -214,7 +214,7 @@ experiment TEST_SocDist type: gui repeat: 1 until: (day >= max_days) {
 	// until close_days[0]. Then prob of movement down by 25%, then 50%, etc
 	parameter "Initialize 1" var: initialize_Settings init:false;
 	parameter "Initialize 2" var: initialize_Infectious init:false;
-	parameter "Initialze 3" var: use_csv init:false;
+	//parameter "Initialze 3" var: use_csv init:false;
 	
 	
 	float seedValue <- rnd(1.0, 10000.0);

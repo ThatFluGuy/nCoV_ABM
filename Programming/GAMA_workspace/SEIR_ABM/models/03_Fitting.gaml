@@ -1,20 +1,17 @@
 /***
 * Name: 03_Model_Fitting
 * Author: Michael L. Jackson
-* Description: Using hill-climbing to estimate parameters
+* Description: Using Tabu to estimate parameters
 ***/
 
 model Fitting
 
-/* Insert your model definition here */
-
-
 /* Third program in the sequence of evaluating the impact of different COVID-19 control measures.  */
 /* This program attempts to reproduce, as closely as possible, the actual interventions undertaken */
-/* in the Seattle area during March and April 2020. Simulated incidence and hospitalization are    */
+/* in the Seattle area during March - August 2020. Simulated incidence and hospitalization are     */
 /* then compared with observed data to see whether the simulation is reasonably reproducing the	   */
 /* actual course of the epidemic so far.														   */
-/* This version uses the hill-climbing algorithm to find best parameter fits.					   */
+/* This version uses the tabu algorithm to find best parameter fits.					   		   */
 
 import "../models/00_Base_Model.gaml"
 
@@ -55,6 +52,7 @@ global {
 	
 	// Starting in May, assume modest reduction in beta_COM due to widespread mask use
 	float masks <- 0.9; 
+	float scale <- 1.1;
 		
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
 	bool school_open <- true;						// Flag for whether school is open
@@ -116,8 +114,6 @@ global {
 		}					
 	}
 
-	// Drop the update_counts since they are not needed
-	
 	action update_counts {
 		loop times: n_cross_inf {
 			ask one_of(agents of_generic_species(Host_Master)){
@@ -176,8 +172,8 @@ global {
 			weekday <- "Mo";
 		} else if weekday = "Mo" {
 			monday_counter <- monday_counter + 1;
-			comm_open_pct <- 1 - comm_close_pcts[monday_counter];
-			work_open_pct <- 1 - work_close_pcts[monday_counter];
+			comm_open_pct <- 1 - (comm_close_pcts[monday_counter]*scale);
+			work_open_pct <- 1 - (work_close_pcts[monday_counter]*scale);
 			prob_nhgq_visit <- nhgq_visit_pcts[monday_counter];
 			
 			weekday <- "Tu";
@@ -364,11 +360,25 @@ species NHresident parent: NHresident_Master {
 species GQresident parent: GQresident_Master {
 }
 
+/* Unit test - are transmission values correct? */
+experiment UnitTest_Values type: gui until: (day >= max_days) {
+	reflex simout{
+		if daypart = "morning"{
+			write day;
+			write "COM pct=" + comm_open_pct;
+			write "Work pct=" + work_open_pct;
+			write "beta COM=" + beta_COM;
+			
+		}
+	}
+}
+
 /* Parameter optimization */
 experiment Tabu_Search type: batch repeat: 3 keep_seed: true until: (day >= max_days) parallel: true {
-	parameter "HH beta" var: beta_HH min: 0.012 max: 0.017 step: 0.001;
-	parameter "COM beta" var: beta_COM min: 0.008 max: 0.011 step: 0.001;
-	parameter "Masks" var: masks min: 0.85 max: 1.0 step: 0.01; 
+	//parameter "HH beta" var: beta_HH min: 0.012 max: 0.017 step: 0.001;
+	//parameter "COM beta" var: beta_COM min: 0.008 max: 0.011 step: 0.001;
+	parameter "Masks" var: masks min: 0.85 max: 1.0 step: 0.01;
+	parameter "Scale" var: scale min: 1.0 max: 1.3 step: 0.01; 
 	
 	method tabu minimize: sum_sq_err iter_max: 50 tabu_list_size: 5;
 	

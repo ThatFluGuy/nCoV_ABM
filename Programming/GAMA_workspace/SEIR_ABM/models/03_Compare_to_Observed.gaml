@@ -26,7 +26,7 @@ global {
 	string dir <- "C:/Users/O992928/Desktop/GAMAout/";
 		
 	float beta_HH  <- 0.015;			 	// Probability of infection given contact in household
-	float beta_COM <- 0.012;				// Probability of infection given contact in workplace/community
+	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -49,7 +49,7 @@ global {
 		0.32, 0.33, 0.30, 0.28, 0.24, 0.23, 0.23, 0.22, 0.21, 0.21, 0.20, 0.20, 0.20, 0.20, 0.19, 0.19];
 	
 	// Starting in May, assume modest reduction in beta_COM due to widespread mask use
-	float masks <- 0.9; 	
+	float masks <- 0.8; 	
 	
 	// Weekly probability of visiting a NH or GQ
 	list<float> nhgq_visit_pcts <- [0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
