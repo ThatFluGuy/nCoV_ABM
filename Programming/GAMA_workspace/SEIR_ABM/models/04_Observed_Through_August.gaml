@@ -20,7 +20,10 @@ import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
 global {
-	int max_days <- 3;
+	int max_days <- 205;
+
+	string save_dir <- "C:/Users/O992928/Desktop/GAMAout/"; // Directory to save population data
+	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
 
 	int sim_number <- 0;
 
@@ -202,28 +205,28 @@ global {
 	    // Save current model state
 	    ask Toddler {
 	    	save [name, indexHome, ageyrs, male, sus, exp, inf, sym, outside_sim, counter_exp, counter_inf, counter_sym, counter_hosp] 
-	    	to: dir + "Toddler_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
+	    	to: save_dir + "Toddler_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
 	    }
 	    ask Child {
 	    	save [name, indexHome, indexSchool, ageyrs, male, sus, exp, inf, sym, outside_sim, counter_exp, counter_inf, 
-	    		counter_sym, counter_hosp] to: dir + "Child_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite:false;
+	    		counter_sym, counter_hosp] to: save_dir + "Child_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite:false;
 	    }
 	    ask Adult {
 	    	save [name, indexHome, indexSchool, indexWorkplace, indexNH, indexGQ, ageyrs, male, sus, exp, inf, sym, 
 	    		outside_sim, counter_exp, counter_inf, counter_sym, counter_hosp]
-	    		to: dir + "Adult_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
+	    		to: save_dir + "Adult_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
 	    }
 	    ask Senior {
 	    	save [name, indexHome, ageyrs, male, sus, exp, inf, sym, outside_sim, counter_exp, counter_inf, counter_sym, counter_hosp]
-	    	to: dir + "Senior_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
+	    	to: save_dir + "Senior_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
 	    }
 	    ask NHresident {
 	    	save [name, indexNH, ageyrs, male, sus, exp, inf, sym, outside_sim, counter_exp, counter_inf, counter_sym, counter_hosp]
-	    	to: dir + "NHresident_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
+	    	to: save_dir + "NHresident_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
 	    }
 	    ask GQresident {
 	    	save [name, indexGQ, ageyrs, male, sus, exp, inf, sym, outside_sim, counter_exp, counter_inf, counter_sym, counter_hosp]
-	    	to: dir + "GQresident_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
+	    	to: save_dir + "GQresident_" + sim_number + "_" + model_number + ".csv" type:"csv" rewrite: false;
 	    }
 	       
 	    do die;						

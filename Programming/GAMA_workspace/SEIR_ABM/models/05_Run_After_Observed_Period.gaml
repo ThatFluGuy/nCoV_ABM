@@ -12,8 +12,10 @@ import "../models/00_Base_Model.gaml"
 /* Set up the global environment */
 global {
 	
+	string read_dir <- "C:/Users/O992928/Desktop/GAMAout/";
+	
 	int day <- 206;
-	int max_days <- 206 + 5;
+	int max_days <- 206 + 100;
 
 	int sim_number <- 0;
 
