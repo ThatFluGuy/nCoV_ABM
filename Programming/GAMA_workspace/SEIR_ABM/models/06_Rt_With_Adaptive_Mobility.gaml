@@ -1,11 +1,11 @@
 /***
-* Name: 05RunAfterObservedPeriod
+* Name: 06RtWithAdaptiveMobility
 * Author: O992928
 * Description: 
 * Tags: Tag1, Tag2, TagN
 ***/
 
-model RunAfterObservedPeriod
+model RtWithAdaptiveMobility
 
 import "../models/00_Base_Model.gaml"
 
@@ -31,27 +31,13 @@ global {
 	// Percent decline variables update in the UpdateDay reflex
 	float work_open_pct <- 1 - 0.57;						// Percent community site visits occurring during specified time period
 	float comm_open_pct <- 1 - 0.19;						// Percent of work occuring during specified time period
-
-	int monday_counter <- 0; 			// Counter for weekly updates to contacts
-
-	// Weekly percent reductions in workplace contacts
-	list<float> work_close_pcts <- [0.57, 0.56, 0.55, 0.54, 0.53, 0.52, 0.51, 0.50, 0.49, 0.48, 0.47, 0.46, 0.45, 0.44, 0.43, 
-		0.42, 0.41, 0.40, 0.39, 0.38, 0.37, 0.36, 0.35, 0.34, 0.33, 0.32, 0.31, 0.30, 0.29, 0.28, 0.27, 0.26, 0.25, 0.24, 0.23,
-		0.22, 0.21, 0.20, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03,
-		0.02, 0.01, 0.0];
 	
-	// Weekly percent reductions in community contacts
-	list<float> comm_close_pcts <- [0.19, 0.19, 0.19, 0.18, 0.18, 0.18, 0.17, 0.17, 0.17, 0.16, 0.16, 0.16, 0.15, 0.15, 0.15, 
-		0.14, 0.14, 0.14, 0.13, 0.13, 0.13, 0.12, 0.12, 0.12, 0.11, 0.11, 0.11, 0.10, 0.10, 0.10, 0.09, 0.09, 0.09, 0.08,
-		0.08, 0.08, 0.07, 0.07, 0.07, 0.06, 0.06, 0.06, 0.05, 0.05, 0.05, 0.04, 0.04, 0.04, 0.04, 0.03, 0.03, 0.03, 0.03,
-		0.02, 0.02, 0.02];
-	
-	// Weekly probability of visiting a NH or GQ
-	list<float> nhgq_visit_pcts <- [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
-		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+	float prob_nhgq_visit <- 0.0;	
 	
 	bool school_open <- false;						// Flag for whether school is open
 
+	// Track daily number infectious to adjust mobility
+	list<int> daily_infectious <- list_with(max_days+1, 0);	
 
 	// Initialize model, specify the number of infectious and susceptible hosts
 	// Use the host outputs as of August 25th as inputs for this model
@@ -119,6 +105,7 @@ global {
 				}
 			}
 		}
+		n_cross_inf <- 0;
 		
 		// Update population count tracking variables
 		if daypart = "evening" {
@@ -142,23 +129,33 @@ global {
 			inf_sen_list[day] <- Senior count (each.inf);
 			inf_nh_list[day] <- NHresident count (each.inf);
 			inf_gq_list[day] <- GQresident count (each.inf);
-						
+			
+			daily_infectious[day] <- inf_tod_list[day] + inf_chi_list[day] + inf_adu_list[day] + inf_sen_list[day] +
+				inf_nh_list[day] + inf_gq_list[day];
 		}
-		n_cross_inf <- 0;
 	}
 
 	// Modify the update_day action to calculate probabilities of going to work or community based on closures
 	action update_day {
+		// Adaptively update work and community mobility
+		 
+		if day > 0 {
+			if daily_infectious[day] > daily_infectious[day-1] {
+				comm_open_pct <- comm_open_pct - 0.005;
+				work_open_pct <- work_open_pct - 0.005;
+			} else if daily_infectious[day] < daily_infectious[day-1] {
+				comm_open_pct <- comm_open_pct + 0.005;
+				work_open_pct <- work_open_pct + 0.005;
+			}
+			comm_open_pct <- max(min(comm_open_pct, 1.0), 0.0);
+			work_open_pct <- max(min(work_open_pct, 1.0), 0.0);
+		}
+		
 		// Update simulation day and weekday
 		day <- day + 1;
 		if weekday = "Su"{
 			weekday <- "Mo";
 		} else if weekday = "Mo" {
-			monday_counter <- monday_counter + 1;
-			comm_open_pct <- 1 - comm_close_pcts[monday_counter];
-			work_open_pct <- 1 - work_close_pcts[monday_counter];
-			prob_nhgq_visit <- nhgq_visit_pcts[monday_counter];
-			
 			weekday <- "Tu";
 		} else if weekday = "Tu" {
 			weekday <- "We";
@@ -171,6 +168,7 @@ global {
 		} else if weekday = "Sa" {
 			weekday <- "Su";
 		}
+		
 	}
 	
 	reflex save_output when: day=max_days{
@@ -202,6 +200,12 @@ global {
 	    do die;						
 	}
 	
+	// Output to console to track simulation progress
+	action write_out {
+		write daypart + " " + day + " Model=" + model_number + " Infected=" + 
+			(inf_tod_list[day-1] + inf_chi_list[day-1] + inf_adu_list[day-1] + inf_sen_list[day-1] + inf_nh_list[day-1] +
+				inf_gq_list[day-1]) + " W=" + work_open_pct +  " C=" + comm_open_pct;
+	}
 }
 
 /* TODDLER, a subset of Host ages 0-5 who is not assigned to a "school" (e.g. daycare, pre-school) */
@@ -372,4 +376,5 @@ experiment Run_from_Aug type: batch repeat: 3 keep_seed: true until: (day >= max
 	}
 	
 }
+
 

@@ -23,9 +23,9 @@ global {
 	int max_days <- 205;
 
 	string save_dir <- "C:/Users/O992928/Desktop/GAMAout/"; // Directory to save population data
-	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
+	string dir <- "H:/Scratch/GAMAout/MPE0KG/";  	// Output directory
 
-	int sim_number <- 0;
+	int sim_number <- 7;
 
 	float beta_HH  <- 0.015;			 	// Probability of infection given contact in household
 	float beta_COM <- 0.010;				// Probability of infection given contact in workplace/community
@@ -55,7 +55,7 @@ global {
 		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
 	
 	// Starting in May, assume modest reduction in beta_COM due to widespread mask use
-	float masks <- 0.9; 
+	float masks <- 0.8; 
 		
 	int school_close_day <- 41; 					// Close schools on day 41 of the simulation (March 12)
 	bool school_open <- true;						// Flag for whether school is open
