@@ -7,6 +7,12 @@
 
 model RtWithAdaptiveMobility
 
+/* This program runs the SARS-CoV-2 simulation starting on August 24th, importing the population states */
+/* created by 04_Observed_Through_August.gaml. The program modifies workplace and community social      */
+/* distancing to try and maintain a specified effective reproductive number (Rt) for as long as 		*/
+/* possible. It does this by calculating Rt on a daily basis and comparing to the target value.		    */
+/* For simplicity, assumes schools are closed, but the same process could be run with schools open.	    */
+
 import "../models/00_Base_Model.gaml"
 
 /* Set up the global environment */
@@ -14,13 +20,23 @@ global {
 	
 	string read_dir <- "C:/Users/O992928/Desktop/GAMAin/";
 	string dir <- "C:/Users/O992928/Desktop/GAMAout/";  	// Output directory
-		
+	//string dir <- "H:/Scratch/GAMAout/MPE0KG/";  			// Output directory
+	//string dir <- "H:/Scratch/GAMAout/roc31v/";  			// Output directory
+	
 	int max_days <- 200;
 
-	int sim_number <- 1;		 // Import specific simulation state
+	float Rt_target <- 1.25;
+	float Rt_now;
+
+	int sim_number <- 0;		 		// Import specific simulation state (range, 0-19)
 
 	float beta_HH  <- 0.015;			// Probability of infection given contact in household
 	float beta_COM <- 0.010;			// Probability of infection given contact in workplace/community, without mask use
+
+	// Generation time interval probabilties based on latent and infectious periods
+	// Goes from day 4 to day 13 pre-onset
+	list<float> gentime_probs <- [0.0290, 0.101, 0.1443, 0.1443, 0.1443, 0.1443, 0.136, 0.1010, 0.0464, 0.0094];
+	list<int> infected_daily <- list_with(13, 0);
 
 	bool initialize_Settings <- false;
 	bool initialize_Infectious <- false;
@@ -35,9 +51,6 @@ global {
 	float prob_nhgq_visit <- 0.0;	
 	
 	bool school_open <- false;						// Flag for whether school is open
-
-	// Track daily number infectious to adjust mobility
-	list<int> daily_infectious <- list_with(max_days+1, 0);	
 
 	// Initialize model, specify the number of infectious and susceptible hosts
 	// Use the host outputs as of August 25th as inputs for this model
@@ -130,22 +143,49 @@ global {
 			inf_nh_list[day] <- NHresident count (each.inf);
 			inf_gq_list[day] <- GQresident count (each.inf);
 			
-			daily_infectious[day] <- inf_tod_list[day] + inf_chi_list[day] + inf_adu_list[day] + inf_sen_list[day] +
-				inf_nh_list[day] + inf_gq_list[day];
+			// Infected during past 13 days
+			if (day >= 13) {infected_daily[12] <- infected_daily[11];}
+			if (day >= 12) {infected_daily[11] <- infected_daily[10];}
+			if (day >= 11) {infected_daily[10] <- infected_daily[9];}
+			if (day >= 10) {infected_daily[9] <- infected_daily[8];}
+			if (day >= 9) {infected_daily[8] <- infected_daily[7];}
+			if (day >= 8) {infected_daily[7] <- infected_daily[6];}
+			if (day >= 7) {infected_daily[6] <- infected_daily[5];}
+			if (day >= 6) {infected_daily[5] <- infected_daily[4];}
+			if (day >= 5) {infected_daily[4] <- infected_daily[3];}
+			if (day >= 4) {infected_daily[3] <- infected_daily[2];}
+			if (day >= 3) {infected_daily[2] <- infected_daily[1];}
+			if (day >= 2) {infected_daily[1] <- infected_daily[0];}
+			if (day >= 1){
+				infected_daily[0] <- (sus_tod_list[day-1] + sus_chi_list[day-1] + sus_adu_list[day-1] + sus_sen_list[day-1] +
+					sus_nh_list[day-1] + sus_gq_list[day-1]) - (sus_tod_list[day] + sus_chi_list[day] + sus_adu_list[day] + 
+					sus_sen_list[day] + sus_nh_list[day] + sus_gq_list[day]);
+			}
 		}
 	}
 
 	// Modify the update_day action to calculate probabilities of going to work or community based on closures
 	action update_day {
-		// Adaptively update work and community mobility
-		 
-		if day > 0 {
-			if daily_infectious[day] > daily_infectious[day-1] {
-				comm_open_pct <- comm_open_pct - 0.005;
-				work_open_pct <- work_open_pct - 0.005;
-			} else if daily_infectious[day] < daily_infectious[day-1] {
-				comm_open_pct <- comm_open_pct + 0.005;
-				work_open_pct <- work_open_pct + 0.005;
+		// Adaptively update work and community mobility to try and keep Rt at the target value
+		// First calculate current Rt using the method of Cori et al (AJE 2013 178(9):1505-12) 
+		if day >= 13 {
+			Rt_now <- infected_daily[0] / 
+				sum(infected_daily[3] * gentime_probs[0],
+					infected_daily[4] * gentime_probs[1],
+					infected_daily[5] * gentime_probs[2],
+					infected_daily[6] * gentime_probs[3],
+					infected_daily[7] * gentime_probs[4],
+					infected_daily[8] * gentime_probs[5],
+					infected_daily[9] * gentime_probs[6],
+					infected_daily[10] * gentime_probs[7],
+					infected_daily[11] * gentime_probs[8],
+					infected_daily[12] * gentime_probs[9]);
+			if Rt_now < Rt_target {
+				comm_open_pct <- comm_open_pct + 0.01;
+				work_open_pct <- work_open_pct + 0.01;
+			} else if Rt_now > Rt_target {
+				comm_open_pct <- comm_open_pct - 0.01;
+				work_open_pct <- work_open_pct - 0.01;
 			}
 			comm_open_pct <- max(min(comm_open_pct, 1.0), 0.0);
 			work_open_pct <- max(min(work_open_pct, 1.0), 0.0);
@@ -202,9 +242,9 @@ global {
 	
 	// Output to console to track simulation progress
 	action write_out {
-		write daypart + " " + day + " Model=" + model_number + " Infected=" + 
+		write daypart + " " + day + " Infected=" + 
 			(inf_tod_list[day-1] + inf_chi_list[day-1] + inf_adu_list[day-1] + inf_sen_list[day-1] + inf_nh_list[day-1] +
-				inf_gq_list[day-1]) + " W=" + work_open_pct +  " C=" + comm_open_pct;
+				inf_gq_list[day-1]) + " Rt=" + Rt_now + " W=" + work_open_pct +  " C=" + comm_open_pct;
 	}
 }
 
@@ -359,7 +399,7 @@ species GQresident parent: GQresident_Master {
 }
 
 /* Parameter optimization */
-experiment Run_from_Aug type: batch repeat: 3 keep_seed: true until: (day >= max_days) parallel: true {
+experiment Run_from_Aug type: batch repeat: 1 keep_seed: true until: (day >= max_days) parallel: true {
 	float seedValue <- rnd(1.0, 10000.0);
 	float seed <- seedValue;
 	 
